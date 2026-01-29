@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowLeft, CreditCard, Truck, Shield, User, MapPin, Phone, Mail } from 'lucide-react';
+import { CreditCard, Truck, Shield, User } from 'lucide-react';
 
 interface CartItem {
   id: string | number;

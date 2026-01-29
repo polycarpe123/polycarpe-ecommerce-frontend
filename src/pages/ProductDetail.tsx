@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
-import { Heart, Star, ShoppingCart, Minus, Plus, Share2, Truck, RefreshCw, Shield } from 'lucide-react';
+import { useParams } from 'react-router-dom';
+import { Heart, Star, Share2, Truck, RefreshCw, Shield } from 'lucide-react';
 import CartModal from "../components/CartModal";
 
 const PRODUCTS: Record<string, any> = {
