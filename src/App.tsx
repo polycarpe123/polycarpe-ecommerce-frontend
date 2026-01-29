@@ -10,6 +10,7 @@ import Checkout from './pages/Checkout';
 import CategoryPage from './pages/CategoryPage';
 import Navigation from './components/layout/header';   
 import './App.css'
+import { AppProvider } from './contexts/AppContext';
 
 import HeroBanner from './components/heroSection';
 import ProductCategories from './components/productCategories';
@@ -45,70 +46,72 @@ const HomePage: React.FC = () => (
 
 function App() {
   return (
-    <BrowserRouter>
-      <Routes>
-        <Route path="/" element={
-          <MainLayout>
-            <HomePage />
-          </MainLayout>
-        } />
-        <Route path="/about" element={
-          <MainLayout>
-            <About />
-          </MainLayout>
-        } />
-        <Route path="/contact" element={
-          <MainLayout>
-            <Contact />
-          </MainLayout>
-        } />
-        <Route path="/blog" element={
-          <MainLayout>
-            <Blog />
-          </MainLayout>
-        } />
-        <Route path="/shop" element={
-          <MainLayout>
-            <Blog />
-          </MainLayout>
-        } />
-        <Route path="/pages" element={
-          <MainLayout>
-            <About />
-          </MainLayout>
-        } />
-        <Route path="/buy-now" element={
-          <MainLayout>
-            <BuyNow />
-          </MainLayout>
-        } />
-        <Route path="/elements" element={
-          <MainLayout>
-            <Elements />
-          </MainLayout>
-        } />
-        <Route path="/cart" element={
-          <MainLayout>
-            <Cart />
-          </MainLayout>
-        } />
-        <Route path="/checkout" element={
-          <MainLayout>
-            <Checkout />
-          </MainLayout>
-        } />
-        <Route path="/product-category/:categoryName" element={
-          <MainLayout>
-            <CategoryPage />
-          </MainLayout>
-        } />
-        <Route path="/product/:name" element={
-          <MainLayout>
-            <ProductDetail />
-          </MainLayout>
-        } />
-      </Routes>
-    </BrowserRouter>
+    <AppProvider>
+      <BrowserRouter>
+        <Routes>
+          <Route path="/" element={
+            <MainLayout>
+              <HomePage />
+            </MainLayout>
+          } />
+          <Route path="/about" element={
+            <MainLayout>
+              <About />
+            </MainLayout>
+          } />
+          <Route path="/contact" element={
+            <MainLayout>
+              <Contact />
+            </MainLayout>
+          } />
+          <Route path="/blog" element={
+            <MainLayout>
+              <Blog />
+            </MainLayout>
+          } />
+          <Route path="/shop" element={
+            <MainLayout>
+              <Blog />
+            </MainLayout>
+          } />
+          <Route path="/pages" element={
+            <MainLayout>
+              <About />
+            </MainLayout>
+          } />
+          <Route path="/buy-now" element={
+            <MainLayout>
+              <BuyNow />
+            </MainLayout>
+          } />
+          <Route path="/elements" element={
+            <MainLayout>
+              <Elements />
+            </MainLayout>
+          } />
+          <Route path="/cart" element={
+            <MainLayout>
+              <Cart />
+            </MainLayout>
+          } />
+          <Route path="/checkout" element={
+            <MainLayout>
+              <Checkout />
+            </MainLayout>
+          } />
+          <Route path="/product-category/:categoryName" element={
+            <MainLayout>
+              <CategoryPage />
+            </MainLayout>
+          } />
+          <Route path="/product/:name" element={
+            <MainLayout>
+              <ProductDetail />
+            </MainLayout>
+          } />
+        </Routes>
+      </BrowserRouter>
+    </AppProvider>
   )
 }
 

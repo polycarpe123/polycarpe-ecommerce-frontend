@@ -2,26 +2,52 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import CartModal from '../CartModal';
 import AuthModal from '../AuthModal';
+import LogoutModal from '../LogoutModal';
+import { useApp } from '../../contexts/AppContext';
 
 const Navigation: React.FC = () => {
     const [isCartOpen, setIsCartOpen] = useState(false);
-    const [cartItems, setCartItems] = useState<any[]>([]);
     const [isAuthOpen, setIsAuthOpen] = useState(false);
+    const [isLogoutOpen, setIsLogoutOpen] = useState(false);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
-    const handleUpdateQuantity = (id: string | number, quantity: number) => {
-        if (quantity <= 0) {
-            setCartItems(cartItems.filter(item => item.id !== id));
+    const { 
+        user, 
+        isAuthenticated, 
+        logout, 
+        getCartCount, 
+        getCartTotal,
+        cart 
+    } = useApp();
+
+    const cartCount = getCartCount();
+    const cartTotal = getCartTotal();
+
+    const handleAuthClick = () => {
+        if (isAuthenticated) {
+            setIsLogoutOpen(true); // Show logout modal
         } else {
-            setCartItems(cartItems.map(item => 
-                item.id === id ? { ...item, quantity } : item
-            ));
+            setIsAuthOpen(true); // Show login modal
         }
     };
 
-    const handleRemoveItem = (id: string | number) => {
-        setCartItems(cartItems.filter(item => item.id !== id));
-    };    
+    const handleLogoutConfirm = () => {
+        logout();
+        setIsLogoutOpen(false);
+    };
+
+    const handleLogoutCancel = () => {
+        setIsLogoutOpen(false);
+    };
+
+    const handleUpdateQuantity = (_id: string | number, _quantity: number) => {
+        // TO DO: implement update quantity logic using useApp context
+    };
+
+    const handleRemoveItem = (_id: string | number) => {
+        // TO DO: implement remove item logic using useApp context
+    };
+
     return (
         <>
         <header>
@@ -94,12 +120,14 @@ const Navigation: React.FC = () => {
               <div className="text-white text-sm flex items-center gap-2">
                 <span className="text-xl">👤</span>
                 <div>
-                  <span className="block">HELLO,</span>
+                  <span className="block">
+                    {isAuthenticated ? `HELLO, ${user?.firstName || 'USER'}` : 'HELLO,'}
+                  </span>
                   <button 
-                    onClick={() => setIsAuthOpen(true)}
+                    onClick={handleAuthClick}
                     className="hover:text-gray-300 font-medium"
                   >
-                    SIGN IN
+                    {isAuthenticated ? 'LOGOUT' : 'SIGN IN'}
                   </button>
                 </div>
               </div>
@@ -112,8 +140,13 @@ const Navigation: React.FC = () => {
               <div className="flex items-center gap-2">
                 <button className="relative text-white hover:text-gray-300 cursor-pointer" onClick={() => setIsCartOpen(true)}>
                   <span className="text-2xl">🛒</span>
+                  {cartCount > 0 && (
+                    <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">
+                      {cartCount}
+                    </span>
+                  )}
                 </button>
-                <span className="text-white text-sm font-medium">$0.00</span>
+                <span className="text-white text-sm font-medium">${cartTotal.toFixed(2)}</span>
               </div>
             </div>
 
@@ -121,7 +154,11 @@ const Navigation: React.FC = () => {
             <div className="flex md:hidden items-center gap-4">
               <button className="relative text-white hover:text-gray-300" onClick={() => setIsCartOpen(true)}>
                 <span className="text-2xl">🛒</span>
-                <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">0</span>
+                {cartCount > 0 && (
+                  <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">
+                    {cartCount}
+                  </span>
+                )}
               </button>
             </div>
           </div>
@@ -192,13 +229,18 @@ const Navigation: React.FC = () => {
         <CartModal 
             isOpen={isCartOpen}
             onClose={() => setIsCartOpen(false)}
-            items={cartItems}
+            items={cart?.items || []}
             onUpdateQuantity={handleUpdateQuantity}
             onRemoveItem={handleRemoveItem}
         />
         <AuthModal 
             isOpen={isAuthOpen}
             onClose={() => setIsAuthOpen(false)}
+        />
+        <LogoutModal 
+            isOpen={isLogoutOpen}
+            onConfirm={handleLogoutConfirm}
+            onCancel={handleLogoutCancel}
         />
         </>
     );
