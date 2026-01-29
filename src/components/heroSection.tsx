@@ -13,7 +13,7 @@ const slides: HeroSlide[] = [
     title: "MEN'S FASHION",
     copy: "Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor!",
     image:
-      "https://picsum.photos/900/900?random=40",
+      "https://i.pinimg.com/1200x/32/5b/f0/325bf01cc35e1852870cef2f6ad5e35c.jpg",
   },
   {
     eyebrow: "Summer Collection 2019",
@@ -55,71 +55,79 @@ const HeroBanner: React.FC = () => {
   const current = slides[currentSlide];
 
   return (
-    <section className="relative bg-gray-100 py-12">
-      <div className="container mx-auto px-4 max-w-7xl">
+    <section className="relative bg-white py-8">
+      <div className="container px-4 max-w-7xl mx-auto">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Main Hero Section */}
           <div className="lg:col-span-2 relative">
+            <img
+              src={current.image}
+              alt={current.title}
+              className={`w-full h-[500px] object-cover rounded-lg transition-opacity duration-300 ${isAnimating ? 'opacity-100' : 'opacity-75'}`}
+            />
+            <div className={`absolute inset-0 flex flex-col justify-center items-start p-12 text-white transition-all duration-300 ${isAnimating ? 'opacity-100 translate-x-0' : 'opacity-75 translate-x-4'}`}>
+              <span className="text-sm uppercase tracking-wider mb-3 font-semibold">{current.eyebrow}</span>
+              <h2 className="text-5xl font-bold mb-4 leading-tight">{current.title}</h2>
+              <p className="text-lg mb-8 max-w-lg leading-relaxed">{current.copy}</p>
+              <button className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 rounded-lg font-semibold transition-colors text-lg">
+                Shop Now
+              </button>
+            </div>
+            
+            {/* Navigation Arrows */}
             <button 
               onClick={handlePrev} 
               aria-label="Previous slide"
-              className="absolute left-4 top-1/2 transform -translate-y-1/2 z-10 bg-white/80 hover:bg-white p-2 rounded-full shadow-lg"
+              className="absolute left-6 top-1/2 transform -translate-y-1/2 z-10 bg-white hover:bg-gray-100 p-3 rounded-full shadow-lg transition-colors"
             >
-              ←
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              </svg>
             </button>
             <button 
               onClick={handleNext} 
               aria-label="Next slide"
-              className="absolute right-4 top-1/2 transform -translate-y-1/2 z-10 bg-white/80 hover:bg-white p-2 rounded-full shadow-lg"
+              className="absolute right-6 top-1/2 transform -translate-y-1/2 z-10 bg-white hover:bg-gray-100 p-3 rounded-full shadow-lg transition-colors"
             >
-              →
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
             </button>
-
-            <img
-              src={current.image}
-              alt={current.title}
-              className={`w-full h-96 object-cover rounded-lg transition-opacity duration-300 ${isAnimating ? 'opacity-100' : 'opacity-75'}`}
-            />
-            <div className={`absolute inset-0 flex flex-col justify-center items-start p-8 text-white transition-all duration-300 ${isAnimating ? 'opacity-100 translate-x-0' : 'opacity-75 translate-x-4'}`}>
-              <span className="text-sm uppercase tracking-wide mb-2">{current.eyebrow}</span>
-              <h2 className="text-4xl font-bold mb-4">{current.title}</h2>
-              <p className="text-lg mb-6 max-w-md">{current.copy}</p>
-              <button className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-semibold transition-colors">
-                Shop Now
-              </button>
-            </div>
           </div>
 
           <div className="space-y-6">
-            <div className="bg-white rounded-lg p-6 shadow-md  flex flex-col">
-              <div className="mb-4">
-                <span className="text-sm text-gray-600 uppercase tracking-wide">WHITE SNEAKERS</span>
-                <h3 className="text-xl font-bold text-gray-900">MIN. 30% OFF</h3>
-                <p className="text-gray-600">Men Fashionable Shoes</p>
-                <button className="mt-3 border border-gray-300 hover:border-gray-400 px-4 py-2 rounded text-gray-700 transition-colors">
+            {/* First Promotional Card */}
+            <div className="relative bg-gray-50 rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+              <img
+                src="https://picsum.photos/600/400?random=92"
+                alt="White sneakers"
+                className="w-full h-48 object-cover"
+              />
+              <div className="p-6">
+                <span className="text-xs text-blue-600 uppercase tracking-wider font-semibold">WHITE SNEAKERS</span>
+                <h3 className="text-2xl font-bold text-gray-900 mt-2 mb-1">MIN. 30% OFF</h3>
+                <p className="text-gray-600 mb-4">Men Fashionable Shoes</p>
+                <button className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-medium transition-colors">
                   Shop Now
                 </button>
               </div>
-              <img
-                src="https://picsum.photos/600/600?random=92"
-                alt="White sneakers"
-                className="w-full h-32 object-cover rounded"
-              />
             </div>
 
-            <div className="bg-white rounded-lg p-6 shadow-md">
-              <div className="mb-4">
-                <span className="text-sm text-gray-600 uppercase tracking-wide">WOMEN'S FASHION</span>
-                <h3 className="text-xl font-bold text-gray-900">UP TO 65% OFF</h3>
-                <p className="text-gray-600">Shoes & Backpacks</p>
-                <button className="mt-3 border border-gray-300 hover:border-gray-400 px-4 py-2 rounded text-gray-700 transition-colors">
+            {/* Second Promotional Card */}
+            <div className="relative bg-gray-50 rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+              <img
+                src="https://picsum.photos/600/400?random=93"
+                alt="Women fashion"
+                className="w-full h-48 object-cover"
+              />
+              <div className="p-6">
+                <span className="text-xs text-blue-600 uppercase tracking-wider font-semibold">WOMEN'S FASHION</span>
+                <h3 className="text-2xl font-bold text-gray-900 mt-2 mb-1">UP TO 65% OFF</h3>
+                <p className="text-gray-600 mb-4">Shoes & Backpacks</p>
+                <button className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-medium transition-colors">
                   Shop Now
                 </button>
               </div>
-              <img
-                src="https://picsum.photos/600/600?random=93"
-                alt="Women bags"
-                className="w-full h-32 object-cover rounded"
-              />
             </div>
           </div>
         </div>

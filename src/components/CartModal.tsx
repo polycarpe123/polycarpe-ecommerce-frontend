@@ -41,7 +41,7 @@ const CartModal: React.FC<CartModalProps> = ({
 
   const handleCheckout = () => {
     onClose();
-    navigate("/checkout", { state: { items } });
+    navigate("/checkout");
   };
 
   if (!isOpen) return null;

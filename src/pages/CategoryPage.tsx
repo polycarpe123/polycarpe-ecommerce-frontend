@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import { Heart, Scale, Eye } from 'lucide-react';
 
 interface Product {
@@ -109,14 +109,22 @@ const CategoryPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="bg-white border-b">
-        <div className="container mx-auto px-4 py-6">
-          <h1 className="text-3xl font-bold text-gray-900">{categoryName}</h1>
+      <div className="container px-4 max-w-7xl mx-auto py-8">
+        <div className="bg-gray-100 border-b-4 border-gray-300">
+          <div className="py-8">
+            <div className="text-center mb-4">
+              <h1 className="text-3xl font-bold text-gray-900">{categoryName}</h1>
+            </div>
+            <nav className="text-sm text-gray-600 text-center">
+              <Link to="/" className="hover:text-blue-600">Home</Link> / 
+              <Link to="/shop" className="hover:text-blue-600">Shop</Link> / 
+              <span className="text-gray-900">{categoryName}</span>
+            </nav>
+          </div>
         </div>
-      </div>
 
-      <div className="container mx-auto px-4 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+        <div className="pt-8">
+          <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
           <div className="lg:col-span-1">
             <div className="bg-white rounded-lg p-6 shadow-sm">
               <h3 className="text-lg font-semibold mb-4">Product categories</h3>
@@ -234,6 +242,7 @@ const CategoryPage: React.FC = () => {
               </div>
             )}
           </div>
+        </div>
         </div>
       </div>
     </div>

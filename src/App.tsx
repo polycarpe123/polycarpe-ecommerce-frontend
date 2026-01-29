@@ -6,6 +6,8 @@ import Blog from './pages/Blog';
 import BuyNow from './pages/Buy-Now';
 import Elements from './pages/Elements';
 import Cart from './pages/Cart';
+import Checkout from './pages/Checkout';
+import CategoryPage from './pages/CategoryPage';
 import Navigation from './components/layout/header';   
 import './App.css'
 
@@ -88,6 +90,16 @@ function App() {
         <Route path="/cart" element={
           <MainLayout>
             <Cart />
+          </MainLayout>
+        } />
+        <Route path="/checkout" element={
+          <MainLayout>
+            <Checkout />
+          </MainLayout>
+        } />
+        <Route path="/product-category/:categoryName" element={
+          <MainLayout>
+            <CategoryPage />
           </MainLayout>
         } />
         <Route path="/product/:name" element={

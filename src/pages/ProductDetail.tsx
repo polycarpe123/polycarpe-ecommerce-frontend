@@ -1,6 +1,6 @@
-import React, { useState } from "react";
-import { useParams } from "react-router-dom";
-import { Heart, Star, Truck, RefreshCw, Shield, Share2 } from "lucide-react";
+import React, { useState } from 'react';
+import { useParams, Link } from 'react-router-dom';
+import { Heart, Star, ShoppingCart, Minus, Plus, Share2, Truck, RefreshCw, Shield } from 'lucide-react';
 import CartModal from "../components/CartModal";
 
 const PRODUCTS: Record<string, any> = {
@@ -517,7 +517,17 @@ const ProductDetail: React.FC = () => {
   
   // Find product by name (decode URI and search through all products)
   const decodedName = name ? decodeURIComponent(name) : "";
-  const product = Object.values(PRODUCTS).find(p => p.name === decodedName);
+  
+  // Try to find by name first, then by ID
+  let product = Object.values(PRODUCTS).find(p => p.name === decodedName);
+  
+  // If not found by name, try to find by ID
+  if (!product && name) {
+    const productId = parseInt(name);
+    if (!isNaN(productId)) {
+      product = Object.values(PRODUCTS).find(p => p.id === productId);
+    }
+  }
 
   const [selectedImg, setSelectedImg] = useState(0);
   const [selectedColor, setSelectedColor] = useState(0);
@@ -530,7 +540,23 @@ const ProductDetail: React.FC = () => {
   if (!product) {
     return (
       <div className="min-h-screen bg-gray-50">
-        <div className="container mx-auto px-4 py-8">Product not found</div>
+        <div className="container px-4 max-w-7xl mx-auto py-16">
+          <div className="text-center">
+            <div className="max-w-md mx-auto">
+              <div className="bg-white rounded-lg shadow-sm p-8">
+                <div className="text-6xl mb-4">🔍</div>
+                <h2 className="text-2xl font-bold text-gray-900 mb-4">Product Not Found</h2>
+                <p className="text-gray-600 mb-8">The product you're looking for doesn't exist or has been removed.</p>
+                <a 
+                  href="/"
+                  className="inline-flex items-center gap-2 bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors"
+                >
+                  Continue Shopping
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     );
   }

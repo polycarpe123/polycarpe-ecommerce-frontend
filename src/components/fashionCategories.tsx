@@ -1,4 +1,5 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 
 interface Product {
   id: number;
@@ -25,13 +26,27 @@ interface FashionCategoryProps {
 }
 
 const FashionCategory: React.FC<FashionCategoryProps> = ({ title, menu, banner, products }) => {
+  const navigate = useNavigate();
+
+  const handleMenuClick = (categoryName: string) => {
+    navigate(`/product-category/${categoryName.toLowerCase()}`);
+  };
+
+  const handleProductClick = (productId: number) => {
+    navigate(`/product/${productId}`);
+  };
+
   return (
     <div className="py-12 bg-white">
       <div className="container mx-auto px-4 max-w-7xl">
         <h2 className="text-2xl font-bold mb-6">{title}</h2>
         <div className="flex gap-2 mb-8">
           {menu.map((item, index) => (
-            <button key={index} className="px-4 py-2 text-sm border rounded hover:bg-gray-50">
+            <button 
+              key={index} 
+              className="px-4 py-2 text-sm border rounded hover:bg-gray-50" 
+              onClick={() => handleMenuClick(item)}
+            >
               {item}
             </button>
           ))}
@@ -46,7 +61,11 @@ const FashionCategory: React.FC<FashionCategoryProps> = ({ title, menu, banner, 
           </div>
           <div className="grid grid-cols-2 gap-4">
             {products.slice(0, 4).map((product) => (
-              <div key={product.id} className="bg-white rounded-lg shadow-sm overflow-hidden">
+              <div 
+                key={product.id} 
+                className="bg-white rounded-lg shadow-sm overflow-hidden cursor-pointer hover:shadow-md transition-shadow"
+                onClick={() => handleProductClick(product.id)}
+              >
                 <div className="relative">
                   {product.featured && (
                     <span className="absolute top-2 left-2 bg-red-500 text-white text-xs px-2 py-1 rounded z-10">

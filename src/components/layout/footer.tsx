@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { Link } from 'react-router-dom';
 
 const Footer: React.FC = () => {
   const [openSections, setOpenSections] = useState({
@@ -7,6 +8,7 @@ const Footer: React.FC = () => {
     account: false,
     newsletter: false,
   });
+  const [email, setEmail] = useState('');
 
   const toggleSection = (section: keyof typeof openSections) => {
     setOpenSections(prev => ({
@@ -15,16 +17,25 @@ const Footer: React.FC = () => {
     }));
   };
 
+  const handleNewsletterSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    // Handle newsletter signup
+    console.log('Newsletter signup:', email);
+    setEmail('');
+  };
+
   return (
     <footer className="bg-gray-900 text-white">
-      <div className="container mx-auto px-4 py-12 max-w-7xl">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8">
+      <div className="container px-4 max-w-7xl mx-auto py-8">
+        <div className="grid grid-cols-2 lg:grid-cols-5 gap-2 lg:gap-4">
           <div className="lg:col-span-1">
-            <h2 className="text-2xl font-bold text-blue-400 mb-4">kapee.</h2>
-            <p className="text-gray-300 mb-6">
+            <Link to="/" className="inline-block">
+              <h2 className="text-2xl font-bold text-blue-400 mb-3 hover:text-blue-300 transition-colors cursor-pointer">kapee.</h2>
+            </Link>
+            <p className="text-gray-300 mb-4">
               Lorem ipsum dolor sit amet, consectetuer adipiscing elit.
             </p>
-            <div className="space-y-3 mb-6">
+            <div className="space-y-3 mb-4">
               <div className="flex items-center gap-3">
                 <span className="text-blue-400">📍</span>
                 <span className="text-sm">Lorem Ipsum, 2046 Lorem Ipsum</span>
@@ -71,9 +82,9 @@ const Footer: React.FC = () => {
                 ▼
               </span>
             </button>
-            <h3 className="hidden md:block font-semibold mb-4">INFORMATION</h3>
+            <h3 className="hidden md:block font-semibold mb-3">INFORMATION</h3>
             <div className={`${openSections.information || 'md:block'} ${!openSections.information && 'hidden'}`}>
-              <ul className="space-y-2">
+              <ul className="space-y-1">
                 <li><a href="#" className="text-gray-300 hover:text-white text-sm">About Us</a></li>
                 <li><a href="#" className="text-gray-300 hover:text-white text-sm">Contact Us</a></li>
                 <li><a href="#" className="text-gray-300 hover:text-white text-sm">Terms & Conditions</a></li>
@@ -94,9 +105,9 @@ const Footer: React.FC = () => {
                 ▼
               </span>
             </button>
-            <h3 className="hidden md:block font-semibold mb-4">OUR SERVICE</h3>
+            <h3 className="hidden md:block font-semibold mb-3">OUR SERVICE</h3>
             <div className={`${openSections.service || 'md:block'} ${!openSections.service && 'hidden'}`}>
-              <ul className="space-y-2">
+              <ul className="space-y-1">
                 <li><a href="#" className="text-gray-300 hover:text-white text-sm">Track Order</a></li>
                 <li><a href="#" className="text-gray-300 hover:text-white text-sm">Wishlist</a></li>
                 <li><a href="#" className="text-gray-300 hover:text-white text-sm">Login</a></li>
@@ -117,9 +128,9 @@ const Footer: React.FC = () => {
                 ▼
               </span>
             </button>
-            <h3 className="hidden md:block font-semibold mb-4">MY ACCOUNT</h3>
+            <h3 className="hidden md:block font-semibold mb-3">MY ACCOUNT</h3>
             <div className={`${openSections.account || 'md:block'} ${!openSections.account && 'hidden'}`}>
-              <ul className="space-y-2">
+              <ul className="space-y-1">
                 <li><a href="#" className="text-gray-300 hover:text-white text-sm">My Account</a></li>
                 <li><a href="#" className="text-gray-300 hover:text-white text-sm">Order History</a></li>
                 <li><a href="#" className="text-gray-300 hover:text-white text-sm">Wishlist</a></li>
@@ -130,7 +141,7 @@ const Footer: React.FC = () => {
             </div>
           </div>
 
-          <div>
+          <div className="lg:col-span-1">
             <button 
               onClick={() => toggleSection("newsletter")}
               className="md:hidden w-full flex justify-between items-center py-2 text-left font-semibold"
@@ -140,17 +151,32 @@ const Footer: React.FC = () => {
                 ▼
               </span>
             </button>
-            <h3 className="hidden md:block font-semibold mb-4">NEWSLETTER</h3>
+            <h3 className="hidden md:block font-semibold mb-3">NEWSLETTER</h3>
             <div className={`${openSections.newsletter || 'md:block'} ${!openSections.newsletter && 'hidden'}`}>
-              <p className="text-gray-300 text-sm mb-4">
+              <p className="text-gray-300 text-sm mb-3">
                 Subscribe to get special offers, free giveaways, and
                 once-in-a-lifetime deals.
               </p>
-              <ul className="space-y-2">
-                <li><a href="#" className="text-gray-300 hover:text-white text-sm">Store Location</a></li>
-                <li><a href="#" className="text-gray-300 hover:text-white text-sm">Orders</a></li>
-                <li><a href="#" className="text-gray-300 hover:text-white text-sm">Our Service</a></li>
-              </ul>
+              
+              {/* Newsletter Signup Form */}
+              <form onSubmit={handleNewsletterSubmit} className="mb-3">
+                <div className="flex flex-col gap-2">
+                  <input
+                    type="email"
+                    placeholder="Enter your email address"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded text-white placeholder-gray-400 focus:outline-none focus:border-blue-500 focus:bg-gray-700 text-sm"
+                    required
+                  />
+                  <button
+                    type="submit"
+                    className="w-full px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors font-medium text-sm"
+                  >
+                    Subscribe
+                  </button>
+                </div>
+              </form>
             </div>
           </div>
         </div>

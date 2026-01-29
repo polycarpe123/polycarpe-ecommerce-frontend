@@ -1,4 +1,5 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 
 interface Product {
   id: number;
@@ -25,6 +26,12 @@ interface FashionShowcaseProps {
 }
 
 const FashionShowcase: React.FC<FashionShowcaseProps> = ({ title, menu, banner, products }) => {
+  const navigate = useNavigate();
+
+  const handleProductClick = (productId: number) => {
+    navigate(`/product/${productId}`);
+  };
+
   return (
     <div className="py-12 bg-white">
       <div className="container mx-auto px-4 max-w-7xl">
@@ -46,7 +53,11 @@ const FashionShowcase: React.FC<FashionShowcaseProps> = ({ title, menu, banner, 
           </div>
           <div className="grid grid-cols-2 gap-4">
             {products.slice(0, 4).map((product) => (
-              <div key={product.id} className="bg-white rounded-lg shadow-sm overflow-hidden">
+              <div 
+                key={product.id} 
+                className="bg-white rounded-lg shadow-sm overflow-hidden cursor-pointer hover:shadow-md transition-shadow"
+                onClick={() => handleProductClick(product.id)}
+              >
                 <div className="relative">
                   {product.featured && (
                     <span className="absolute top-2 left-2 bg-red-500 text-white text-xs px-2 py-1 rounded z-10">

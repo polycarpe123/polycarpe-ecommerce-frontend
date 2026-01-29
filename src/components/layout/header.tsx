@@ -1,10 +1,13 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import CartModal from '../CartModal';
+import AuthModal from '../AuthModal';
 
 const Navigation: React.FC = () => {
     const [isCartOpen, setIsCartOpen] = useState(false);
     const [cartItems, setCartItems] = useState<any[]>([]);
+    const [isAuthOpen, setIsAuthOpen] = useState(false);
+    const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
     const handleUpdateQuantity = (id: string | number, quantity: number) => {
         if (quantity <= 0) {
@@ -53,11 +56,23 @@ const Navigation: React.FC = () => {
           <div className="flex justify-between items-center">
             {/* Logo */}
             <div>
-              <h1 className="text-3xl font-bold text-white">kapee.</h1>
+              <Link to="/" className="inline-block">
+                <h1 className="text-2xl md:text-3xl font-bold text-white hover:text-gray-200 transition-colors cursor-pointer">kapee.</h1>
+              </Link>
             </div>
 
-            {/* Search Bar */}
-            <div className="flex-1 max-w-2xl mx-8 bg-white rounded-full flex items-center p-1">
+            {/* Mobile Menu Button */}
+            <button 
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              className="md:hidden text-white p-2"
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
+            </button>
+
+            {/* Desktop Search Bar */}
+            <div className="hidden md:flex flex-1 max-w-2xl mx-8 bg-white rounded-full flex items-center p-1">
               <input
                 type="text"
                 placeholder="Search for products, categories, brands, sku..."
@@ -75,12 +90,17 @@ const Navigation: React.FC = () => {
             </div>
 
             {/* Right Section */}
-            <div className="flex items-center gap-8">
+            <div className="hidden md:flex items-center gap-6">
               <div className="text-white text-sm flex items-center gap-2">
                 <span className="text-xl">👤</span>
                 <div>
                   <span className="block">HELLO,</span>
-                  <button className="hover:text-gray-300 font-medium">SIGN IN</button>
+                  <button 
+                    onClick={() => setIsAuthOpen(true)}
+                    className="hover:text-gray-300 font-medium"
+                  >
+                    SIGN IN
+                  </button>
                 </div>
               </div>
 
@@ -96,23 +116,76 @@ const Navigation: React.FC = () => {
                 <span className="text-white text-sm font-medium">$0.00</span>
               </div>
             </div>
+
+            {/* Mobile Right Icons */}
+            <div className="flex md:hidden items-center gap-4">
+              <button className="relative text-white hover:text-gray-300" onClick={() => setIsCartOpen(true)}>
+                <span className="text-2xl">🛒</span>
+                <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">0</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Mobile Search Bar */}
+          <div className="md:hidden mt-4 bg-white rounded-full flex items-center p-1">
+            <input
+              type="text"
+              placeholder="Search products..."
+              className="flex-1 px-4 py-2 text-gray-700 bg-transparent outline-none text-sm"
+            />
+            <button className="bg-blue-600 text-white px-4 py-2 rounded-full hover:bg-blue-700 text-sm">
+              Search
+            </button>
           </div>
         </div>
       </div>
         <nav className='bg-white shadow-md'>
-            <div className='container mx-auto px-4 py-4 max-w-7xl flex items-center'>
-                <div className='bg-white border-r px-6 py-2 flex items-center justify-between' style={{ width: '250px' }}>
-                    <span className='text-gray-700 font-semibold'>SHOP BY DEPARTMENT</span>
-                    <span className='text-gray-700 text-xl'>&#8801;</span> {/* Hamburger icon */}
+            <div className='container mx-auto px-4 py-4 max-w-7xl'>
+                {/* Desktop Navigation */}
+                <div className='hidden lg:flex items-center'>
+                    <div className='bg-white border-r px-6 py-2 flex items-center justify-between' style={{ width: '250px' }}>
+                        <span className='text-gray-700 font-semibold'>SHOP BY DEPARTMENT</span>
+                        <span className='text-gray-700 text-xl'>&#8801;</span>
+                    </div>
+                    <ul className='flex space-x-6 ml-8'>
+                        <li><Link to="/" className='text-gray-700 hover:text-blue-800 font-medium flex items-center'>HOME <span className='ml-1 text-xs'>&#9662;</span></Link></li>
+                        <li><Link to="/shop" className='text-gray-700 hover:text-blue-800 font-medium flex items-center'>SHOP <span className='ml-1 text-xs'>&#9662;</span></Link></li>
+                        <li><Link to="/pages" className='text-gray-700 hover:text-blue-800 font-medium flex items-center'>PAGES <span className='ml-1 text-xs'>&#9662;</span></Link></li>
+                        <li><Link to="/blog" className='text-gray-700 hover:text-blue-800 font-medium flex items-center'>BLOG <span className='ml-1 text-xs'>&#9662;</span></Link></li>
+                        <li><Link to="/elements" className='text-gray-700 hover:text-blue-800 font-medium flex items-center'>ELEMENTS <span className='ml-1 text-xs'>&#9662;</span></Link></li>
+                        <li><Link to="/buy-now" className='text-gray-700 hover:text-blue-800 font-medium'>BUY NOW</Link></li>
+                    </ul>
                 </div>
-                <ul className='flex space-x-6 ml-8'>
-                    <li><Link to="/" className='text-gray-700 hover:text-blue-800 font-medium flex items-center'>HOME <span className='ml-1 text-xs'>&#9662;</span></Link></li>
-                    <li><Link to="/shop" className='text-gray-700 hover:text-blue-800 font-medium flex items-center'>SHOP <span className='ml-1 text-xs'>&#9662;</span></Link></li>
-                    <li><Link to="/pages" className='text-gray-700 hover:text-blue-800 font-medium flex items-center'>PAGES <span className='ml-1 text-xs'>&#9662;</span></Link></li>
-                    <li><Link to="/blog" className='text-gray-700 hover:text-blue-800 font-medium flex items-center'>BLOG <span className='ml-1 text-xs'>&#9662;</span></Link></li>
-                    <li><Link to="/elements" className='text-gray-700 hover:text-blue-800 font-medium flex items-center'>ELEMENTS <span className='ml-1 text-xs'>&#9662;</span></Link></li>
-                    <li><Link to="/buy-now" className='text-gray-700 hover:text-blue-800 font-medium'>BUY NOW</Link></li>
-                </ul>
+
+                {/* Mobile Navigation */}
+                <div className='lg:hidden'>
+                    <div className='bg-white border-r px-4 py-2 flex items-center justify-between'>
+                        <span className='text-gray-700 font-semibold text-sm'>SHOP BY DEPARTMENT</span>
+                        <span className='text-gray-700 text-lg'>&#8801;</span>
+                    </div>
+                </div>
+
+                {/* Mobile Menu */}
+                {isMobileMenuOpen && (
+                    <div className='lg:hidden mt-4 border-t pt-4'>
+                        <ul className='space-y-3'>
+                            <li><Link to="/" className='text-gray-700 hover:text-blue-800 font-medium block py-2'>HOME</Link></li>
+                            <li><Link to="/shop" className='text-gray-700 hover:text-blue-800 font-medium block py-2'>SHOP</Link></li>
+                            <li><Link to="/pages" className='text-gray-700 hover:text-blue-800 font-medium block py-2'>PAGES</Link></li>
+                            <li><Link to="/blog" className='text-gray-700 hover:text-blue-800 font-medium block py-2'>BLOG</Link></li>
+                            <li><Link to="/elements" className='text-gray-700 hover:text-blue-800 font-medium block py-2'>ELEMENTS</Link></li>
+                            <li><Link to="/buy-now" className='text-gray-700 hover:text-blue-800 font-medium block py-2'>BUY NOW</Link></li>
+                        </ul>
+                        <div className='mt-4 pt-4 border-t'>
+                            <button 
+                                onClick={() => setIsAuthOpen(true)}
+                                className='w-full text-left text-gray-700 hover:text-blue-800 font-medium py-2'
+                            >
+                                SIGN IN
+                            </button>
+                        </div>
+                    </div>
+                )}
             </div>
         </nav>
         </header>
@@ -122,6 +195,10 @@ const Navigation: React.FC = () => {
             items={cartItems}
             onUpdateQuantity={handleUpdateQuantity}
             onRemoveItem={handleRemoveItem}
+        />
+        <AuthModal 
+            isOpen={isAuthOpen}
+            onClose={() => setIsAuthOpen(false)}
         />
         </>
     );
