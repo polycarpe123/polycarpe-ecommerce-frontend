@@ -4,6 +4,7 @@ import CartModal from '../CartModal';
 import AuthModal from '../AuthModal';
 import LogoutModal from '../LogoutModal';
 import { useApp } from '../../contexts/AppContext';
+import { useWishlist } from '../../contexts/WishlistContext';
 
 const Navigation: React.FC = () => {
     const [isCartOpen, setIsCartOpen] = useState(false);
@@ -15,10 +16,12 @@ const Navigation: React.FC = () => {
         user, 
         isAuthenticated, 
         logout, 
+        cart, 
         getCartCount, 
-        getCartTotal,
-        cart 
+        getCartTotal 
     } = useApp();
+
+    const { wishlistCount } = useWishlist();
 
     const cartCount = getCartCount();
     const cartTotal = getCartTotal();
@@ -123,28 +126,40 @@ const Navigation: React.FC = () => {
                   <span className="block">
                     {isAuthenticated ? `HELLO, ${user?.firstName || 'USER'}` : 'HELLO,'}
                   </span>
-                  <button 
-                    onClick={handleAuthClick}
-                    className="hover:text-gray-300 font-medium"
-                  >
-                    {isAuthenticated ? 'LOGOUT' : 'SIGN IN'}
-                  </button>
+                  <div className="flex items-center gap-2">
+                    {isAuthenticated && user?.role === 'admin' && (
+                      <Link 
+                        to="/admin/dashboard" 
+                        className="text-xs bg-yellow-500 text-blue-900 px-2 py-1 rounded font-medium hover:bg-yellow-400 transition-colors"
+                      >
+                        ADMIN
+                      </Link>
+                    )}
+                    <button 
+                      onClick={handleAuthClick}
+                      className="hover:text-gray-300 font-medium"
+                    >
+                      {isAuthenticated ? 'LOGOUT' : 'SIGN IN'}
+                    </button>
+                  </div>
                 </div>
               </div>
 
               <button className="relative text-white hover:text-gray-300">
                 <span className="text-2xl">♡</span>
-                <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">0</span>
+                {wishlistCount > 0 && (
+                  <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">
+                    {wishlistCount}
+                  </span>
+                )}
               </button>
 
               <div className="flex items-center gap-2">
                 <button className="relative text-white hover:text-gray-300 cursor-pointer" onClick={() => setIsCartOpen(true)}>
                   <span className="text-2xl">🛒</span>
-                  {cartCount > 0 && (
-                    <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">
-                      {cartCount}
-                    </span>
-                  )}
+                  <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">
+                    {cartCount}
+                  </span>
                 </button>
                 <span className="text-white text-sm font-medium">${cartTotal.toFixed(2)}</span>
               </div>
@@ -152,13 +167,19 @@ const Navigation: React.FC = () => {
 
             {/* Mobile Right Icons */}
             <div className="flex md:hidden items-center gap-4">
-              <button className="relative text-white hover:text-gray-300" onClick={() => setIsCartOpen(true)}>
-                <span className="text-2xl">🛒</span>
-                {cartCount > 0 && (
+              <button className="relative text-white hover:text-gray-300">
+                <span className="text-2xl">♡</span>
+                {wishlistCount > 0 && (
                   <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">
-                    {cartCount}
+                    {wishlistCount}
                   </span>
                 )}
+              </button>
+              <button className="relative text-white hover:text-gray-300" onClick={() => setIsCartOpen(true)}>
+                <span className="text-2xl">🛒</span>
+                <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">
+                  {cartCount}
+                </span>
               </button>
             </div>
           </div>

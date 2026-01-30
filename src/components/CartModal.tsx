@@ -1,6 +1,6 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Trash2 } from "lucide-react";
+import { Trash2 } from "lucide-react";
 
 interface CartItem {
   id: string | number;
@@ -26,22 +26,22 @@ const CartModal: React.FC<CartModalProps> = ({
   onRemoveItem,
 }) => {
   const navigate = useNavigate();
-  const subtotal = items.reduce(
-    (sum, item) => sum + (isNaN(item.price) ? 0 : item.price * item.quantity),
+  const subtotal = (items && Array.isArray(items)) ? items.reduce(
+    (sum, item) => sum + (isNaN(item.price) ? 0 : (item.price || 0) * (item.quantity || 0)),
     0,
-  );
+  ) : 0;
   const shippingThreshold = 200;
   const progressPercentage = (subtotal / shippingThreshold) * 100;
   const remainingForFreeShipping = Math.max(0, shippingThreshold - subtotal);
 
-  const handleViewCart = () => {
-    onClose();
-    navigate("/cart");
-  };
-
   const handleCheckout = () => {
     onClose();
     navigate("/checkout");
+  };
+
+  const handleViewCart = () => {
+    onClose();
+    navigate("/cart");
   };
 
   if (!isOpen) return null;
@@ -52,9 +52,6 @@ const CartModal: React.FC<CartModalProps> = ({
       <div className="fixed right-0 top-0 h-full w-96 bg-white shadow-xl z-50 flex flex-col">
         {/* Header */}
         <div className="bg-blue-600 p-4 flex items-center justify-between">
-          <button onClick={onClose} className="flex items-center gap-2 text-white">
-            <ArrowLeft size={20} />
-          </button>
           <h2 className="font-bold text-white text-lg">MY CART</h2>
           <button onClick={onClose} className="text-white text-xl">×</button>
         </div>

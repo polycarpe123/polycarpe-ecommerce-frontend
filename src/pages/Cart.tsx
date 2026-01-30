@@ -1,66 +1,25 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Link } from 'react-router-dom';
+import { useApp } from '../contexts/AppContext';
 import { ArrowLeft, Trash2, Plus, Minus } from 'lucide-react';
 
-interface CartItem {
-  id: string | number;
-  name: string;
-  price: number;
-  quantity: number;
-  image?: string;
-  color?: string;
-  size?: string;
-}
-
 const Cart: React.FC = () => {
-  // Sample cart data - in real app, this would come from state management
-  const [cartItems, setCartItems] = useState<CartItem[]>([
-    {
-      id: 1,
-      name: "Men Hooded Navy Blue & Grey Track Jacket",
-      price: 70.00,
-      quantity: 1,
-      image: "https://picsum.photos/600/400?random=401",
-      color: "Navy Blue",
-      size: "M"
-    },
-    {
-      id: 2,
-      name: "Women Off White Printed Blouse",
-      price: 47.00,
-      quantity: 2,
-      image: "https://picsum.photos/600/400?random=402",
-      color: "Off White",
-      size: "S"
-    }
-  ]);
+  const { cart, updateQuantity, removeFromCart } = useApp();
+  
+  const cartItems = cart?.items || [];
+  
+  const subtotal = cart?.subtotal || 0;
+  const shipping = cart?.shipping || 0;
+  const tax = cart?.tax || 0;
+  const total = cart?.total || 0;
 
   const handleUpdateQuantity = (id: string | number, quantity: number) => {
-    const numId = typeof id === 'string' ? parseInt(id) : id;
-    if (quantity <= 0) {
-      setCartItems(cartItems.filter((item) => item.id !== numId));
-    } else {
-      setCartItems(
-        cartItems.map((item) =>
-          item.id === numId ? { ...item, quantity } : item,
-        ),
-      );
-    }
+    updateQuantity(id, quantity);
   };
 
   const handleRemoveItem = (id: string | number) => {
-    const numId = typeof id === 'string' ? parseInt(id) : id;
-    setCartItems(cartItems.filter((item) => item.id !== numId));
+    removeFromCart(id);
   };
-
-  const subtotal = cartItems.reduce(
-    (sum, item) => sum + item.price * item.quantity,
-    0,
-  );
-  
-  const shipping = subtotal > 200 ? 0 : 10;
-  const tax = subtotal * 0.08; // 8% tax
-  const total = subtotal + shipping + tax;
 
   return (
     <div className='min-h-screen bg-gray-50'>
@@ -98,7 +57,7 @@ const Cart: React.FC = () => {
                 </div>
                 
                 <div className='divide-y'>
-                  {cartItems.map((item) => (
+                  {cartItems.map((item: any) => (
                     <div key={item.id} className='p-6'>
                       <div className='flex gap-4'>
                         {/* Product Image */}

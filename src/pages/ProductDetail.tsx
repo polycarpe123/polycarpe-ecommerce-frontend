@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { Heart, Star, Share2, Truck, RefreshCw, Shield } from 'lucide-react';
 import CartModal from "../components/CartModal";
+import { useApp } from '../contexts/AppContext';
 
 const PRODUCTS: Record<string, any> = {
   "97": {
@@ -535,7 +536,25 @@ const ProductDetail: React.FC = () => {
   const [qty, setQty] = useState(1);
   const [tab, setTab] = useState("desc");
   const [isCartOpen, setIsCartOpen] = useState(false);
-  const [cartItems, setCartItems] = useState<any[]>([]);
+  const [productImages, setProductImages] = useState<string[]>([]);
+  
+  // Use global cart context
+  const { addToCart, cart, updateQuantity, removeFromCart } = useApp();
+
+  // Load dynamic images from Unsplash
+  useEffect(() => {
+    if (product) {
+      // Temporarily disable Unsplash API calls to prevent page crashes
+      console.log('Product loaded:', product.name);
+      console.log('Unsplash API temporarily disabled to prevent crashes');
+      
+      // Use original images for now
+      setProductImages(product.images);
+    }
+  }, [product]);
+
+  // Use dynamic images if available, otherwise fallback to original
+  const displayImages = productImages.length > 0 ? productImages : (product?.images || []);
 
   if (!product) {
     return (
@@ -568,47 +587,21 @@ const ProductDetail: React.FC = () => {
   );
 
   const handleAddToCart = () => {
-    const existingItem = cartItems.find((item) => item.id === product.id);
-
-    if (existingItem) {
-      setCartItems(
-        cartItems.map((item) =>
-          item.id === product.id
-            ? { ...item, quantity: item.quantity + qty }
-            : item,
-        ),
-      );
-    } else {
-      setCartItems([
-        ...cartItems,
-        {
-          id: product.id,
-          name: product.name,
-          price: parseFloat(product.price.replace('$', '')),
-          quantity: qty,
-          image: product.images[0],
-        },
-      ]);
-    }
+    if (!product) return;
+    
+    const cartItem = {
+      productId: product.id,
+      quantity: qty,
+      name: product.name,
+      price: parseFloat(product.price.replace('$', '')),
+      image: productImages[0] || product.images[0],
+      category: product.category,
+      color: product.colors?.[selectedColor]?.name,
+      size: selectedSize
+    };
+    
+    addToCart(cartItem);
     setIsCartOpen(true);
-  };
-
-  const handleUpdateQuantity = (id: string | number, quantity: number) => {
-    const numId = typeof id === 'string' ? parseInt(id) : id;
-    if (quantity <= 0) {
-      setCartItems(cartItems.filter((item) => item.id !== numId));
-    } else {
-      setCartItems(
-        cartItems.map((item) =>
-          item.id === numId ? { ...item, quantity } : item,
-        ),
-      );
-    }
-  };
-
-  const handleRemoveItem = (id: string | number) => {
-    const numId = typeof id === 'string' ? parseInt(id) : id;
-    setCartItems(cartItems.filter((item) => item.id !== numId));
   };
 
   return (
@@ -622,18 +615,18 @@ const ProductDetail: React.FC = () => {
           {/* IMAGE GALLERY */}
           <div>
             <div className="mb-4">
-              <img src={product.images[selectedImg]} alt={product.name} className="w-full h-96 object-cover rounded-lg" />
+              <img src={displayImages[selectedImg]} alt={product.name} className="w-full h-96 object-cover rounded-lg" />
             </div>
             <div className="flex gap-2">
-              {product.images.map((img: string, i: number) => (
+              {displayImages.map((img: string, i: number) => (
                 <button
                   key={i}
                   className={`w-16 h-16 rounded border-2 overflow-hidden ${
-                    i === selectedImg ? 'border-blue-500' : 'border-gray-200'
+                    selectedImg === i ? "border-blue-500" : "border-gray-200"
                   }`}
                   onClick={() => setSelectedImg(i)}
                 >
-                  <img src={img} alt={`View ${i + 1}`} className="w-full h-full object-cover" />
+                  <img src={img} alt={`${product.name} ${i + 1}`} className="w-full h-full object-cover" />
                 </button>
               ))}
             </div>
@@ -852,9 +845,9 @@ const ProductDetail: React.FC = () => {
       <CartModal
         isOpen={isCartOpen}
         onClose={() => setIsCartOpen(false)}
-        items={cartItems}
-        onUpdateQuantity={handleUpdateQuantity}
-        onRemoveItem={handleRemoveItem}
+        items={cart?.items || []}
+        onUpdateQuantity={updateQuantity}
+        onRemoveItem={removeFromCart}
       />
     </div>
   );

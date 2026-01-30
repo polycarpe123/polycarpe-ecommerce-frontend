@@ -10,7 +10,24 @@ export const useCart = () => {
 
   // Load cart on mount
   useEffect(() => {
+    // Temporary: Clear any existing cart data to ensure clean start
+    localStorage.removeItem('cart');
     loadCart();
+  }, []);
+
+  // Listen for localStorage changes
+  useEffect(() => {
+    const handleStorageChange = () => {
+      loadCart();
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    window.addEventListener('cartUpdated', handleStorageChange);
+    
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('cartUpdated', handleStorageChange);
+    };
   }, []);
 
   const loadCart = useCallback(async () => {
@@ -31,60 +48,109 @@ export const useCart = () => {
     quantity: number;
     color?: string;
     size?: string;
+    name?: string;
+    price?: number;
+    image?: string;
+    category?: string;
   }) => {
     try {
+      setLoading(true);
       setError(null);
       const updatedCart = await cartService.addToCart(item);
       setCart(updatedCart);
+      
+      // Trigger custom event for other components
+      window.dispatchEvent(new CustomEvent('cartUpdated'));
+      
       return updatedCart;
     } catch (err: any) {
-      const errorMessage = err.response?.data?.message || 'Failed to add item to cart';
-      setError(errorMessage);
-      throw new Error(errorMessage);
+      setError(err.response?.data?.message || 'Failed to add item to cart');
+      throw err;
+    } finally {
+      setLoading(false);
     }
   }, []);
 
   const updateQuantity = useCallback(async (itemId: string | number, quantity: number) => {
     try {
+      setLoading(true);
       setError(null);
       const updatedCart = await cartService.updateCartItem(itemId, quantity);
       setCart(updatedCart);
+      
+      // Trigger custom event for other components
+      window.dispatchEvent(new CustomEvent('cartUpdated'));
+      
       return updatedCart;
     } catch (err: any) {
-      const errorMessage = err.response?.data?.message || 'Failed to update cart';
-      setError(errorMessage);
-      throw new Error(errorMessage);
+      setError(err.response?.data?.message || 'Failed to update item quantity');
+      throw err;
+    } finally {
+      setLoading(false);
     }
   }, []);
 
   const removeFromCart = useCallback(async (itemId: string | number) => {
     try {
+      setLoading(true);
       setError(null);
       const updatedCart = await cartService.removeFromCart(itemId);
       setCart(updatedCart);
+      
+      // Trigger custom event for other components
+      window.dispatchEvent(new CustomEvent('cartUpdated'));
+      
       return updatedCart;
     } catch (err: any) {
-      const errorMessage = err.response?.data?.message || 'Failed to remove item from cart';
-      setError(errorMessage);
-      throw new Error(errorMessage);
+      setError(err.response?.data?.message || 'Failed to remove item from cart');
+      throw err;
+    } finally {
+      setLoading(false);
     }
   }, []);
 
   const clearCart = useCallback(async () => {
     try {
+      setLoading(true);
       setError(null);
       await cartService.clearCart();
-      setCart(null);
+      
+      // Set empty cart object instead of null to ensure proper state updates
+      const emptyCart: Cart = {
+        id: 'cart-1',
+        items: [],
+        total: 0.00,
+        subtotal: 0.00,
+        tax: 0.00,
+        shipping: 0,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      };
+      setCart(emptyCart);
+      
+      // Trigger custom event for other components
+      window.dispatchEvent(new CustomEvent('cartUpdated'));
+      
+      localStorage.removeItem('cart');
     } catch (err: any) {
-      const errorMessage = err.response?.data?.message || 'Failed to clear cart';
-      setError(errorMessage);
-      throw new Error(errorMessage);
+      setError(err.response?.data?.message || 'Failed to clear cart');
+      throw err;
+    } finally {
+      setLoading(false);
     }
   }, []);
 
   const getCartCount = useCallback(() => {
+    // Handle null, undefined, or empty cart states
     if (!cart) return 0;
-    return cart.items.reduce((total, item) => total + item.quantity, 0);
+    if (!cart.items || !Array.isArray(cart.items)) return 0;
+    if (cart.items.length === 0) return 0;
+    
+    // Sum up quantities safely
+    return cart.items.reduce((total, item) => {
+      const quantity = item.quantity || 0;
+      return total + quantity;
+    }, 0);
   }, [cart]);
 
   const getCartTotal = useCallback(() => {

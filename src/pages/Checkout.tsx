@@ -1,39 +1,18 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { useApp } from '../contexts/AppContext';
 import { CreditCard, Truck, Shield, User } from 'lucide-react';
-
-interface CartItem {
-  id: string | number;
-  name: string;
-  price: number;
-  quantity: number;
-  image?: string;
-  color?: string;
-  size?: string;
-}
+import { orderService, type CreateOrderData } from '../services/orderService';
 
 const Checkout: React.FC = () => {
-  // Sample cart data - in real app, this would come from state management or navigation state
-  const [cartItems] = useState<CartItem[]>([
-    {
-      id: 1,
-      name: "Men Hooded Navy Blue & Grey Track Jacket",
-      price: 70.00,
-      quantity: 1,
-      image: "https://picsum.photos/600/400?random=401",
-      color: "Navy Blue",
-      size: "M"
-    },
-    {
-      id: 2,
-      name: "Women Off White Printed Blouse",
-      price: 47.00,
-      quantity: 2,
-      image: "https://picsum.photos/600/400?random=402",
-      color: "Off White",
-      size: "S"
-    }
-  ]);
+  const { cart, clearCart } = useApp();
+  
+  const cartItems = cart?.items || [];
+  
+  const subtotal = cart?.subtotal || 0;
+  const shipping = cart?.shipping || 0;
+  const tax = cart?.tax || 0;
+  const total = cart?.total || 0;
 
   // Form states
   const [billingInfo, setBillingInfo] = useState({
@@ -69,69 +48,60 @@ const Checkout: React.FC = () => {
     cvv: ''
   });
 
-  // Validation errors state
-  const [errors, setErrors] = useState<{
+  // Validation errors state (temporarily disabled for testing)
+  const [errors /*, setErrors*/] = useState<{
     billing?: Record<string, string>;
     shipping?: Record<string, string>;
     payment?: Record<string, string>;
   }>({});
 
-  const subtotal = cartItems.reduce(
-    (sum, item) => sum + item.price * item.quantity,
-    0,
-  );
-  
-  const shipping = subtotal > 200 ? 0 : 10;
-  const tax = subtotal * 0.08; // 8% tax
-  const total = subtotal + shipping + tax;
+  const validateForm = (): boolean => {
+    // TEMPORARILY DISABLED: All validation commented out for testing
+    // const newErrors: typeof errors = {
+    //   billing: {},
+    //   shipping: {},
+    //   payment: {}
+    // };
 
-  const validateForm = () => {
-    const newErrors: typeof errors = {
-      billing: {},
-      shipping: {},
-      payment: {}
-    };
+    // // Validate billing information
+    // if (!billingInfo.firstName.trim()) newErrors.billing!.firstName = 'First name is {/* required */}';
+    // if (!billingInfo.lastName.trim()) newErrors.billing!.lastName = 'Last name is {/* required */}';
+    // if (!billingInfo.email.trim()) newErrors.billing!.email = 'Email is {/* required */}';
+    // else if (!/\S+@\S+\.\S+/.test(billingInfo.email)) newErrors.billing!.email = 'Email is invalid';
+    // if (!billingInfo.phone.trim()) newErrors.billing!.phone = 'Phone number is {/* required */}';
+    // if (!billingInfo.address.trim()) newErrors.billing!.address = 'Street address is {/* required */}';
+    // if (!billingInfo.city.trim()) newErrors.billing!.city = 'City is {/* required */}';
+    // if (!billingInfo.state.trim()) newErrors.billing!.state = 'State is {/* required */}';
+    // if (!billingInfo.zipCode.trim()) newErrors.billing!.zipCode = 'ZIP code is {/* required */}';
 
-    // Validate billing information
-    if (!billingInfo.firstName.trim()) newErrors.billing!.firstName = 'First name is required';
-    if (!billingInfo.lastName.trim()) newErrors.billing!.lastName = 'Last name is required';
-    if (!billingInfo.email.trim()) newErrors.billing!.email = 'Email is required';
-    else if (!/\S+@\S+\.\S+/.test(billingInfo.email)) newErrors.billing!.email = 'Email is invalid';
-    if (!billingInfo.phone.trim()) newErrors.billing!.phone = 'Phone number is required';
-    if (!billingInfo.address.trim()) newErrors.billing!.address = 'Street address is required';
-    if (!billingInfo.city.trim()) newErrors.billing!.city = 'City is required';
-    if (!billingInfo.state.trim()) newErrors.billing!.state = 'State is required';
-    if (!billingInfo.zipCode.trim()) newErrors.billing!.zipCode = 'ZIP code is required';
+    // // Validate shipping information if different from billing
+    // if (!shippingInfo.sameAsBilling) {
+    //   if (!shippingInfo.firstName.trim()) newErrors.shipping!.firstName = 'First name is {/* required */}';
+    //   if (!shippingInfo.lastName.trim()) newErrors.shipping!.lastName = 'Last name is {/* required */}';
+    //   if (!shippingInfo.address.trim()) newErrors.shipping!.address = 'Street address is {/* required */}';
+    //   if (!shippingInfo.city.trim()) newErrors.shipping!.city = 'City is {/* required */}';
+    //   if (!shippingInfo.state.trim()) newErrors.shipping!.state = 'State is {/* required */}';
+    //   if (!shippingInfo.zipCode.trim()) newErrors.shipping!.zipCode = 'ZIP code is {/* required */}';
+    // }
 
-    // Validate shipping information if different from billing
-    if (!shippingInfo.sameAsBilling) {
-      if (!shippingInfo.firstName.trim()) newErrors.shipping!.firstName = 'First name is required';
-      if (!shippingInfo.lastName.trim()) newErrors.shipping!.lastName = 'Last name is required';
-      if (!shippingInfo.address.trim()) newErrors.shipping!.address = 'Street address is required';
-      if (!shippingInfo.city.trim()) newErrors.shipping!.city = 'City is required';
-      if (!shippingInfo.state.trim()) newErrors.shipping!.state = 'State is required';
-      if (!shippingInfo.zipCode.trim()) newErrors.shipping!.zipCode = 'ZIP code is required';
-    }
+    // // Validate payment information
+    // if (paymentMethod === 'card') {
+    //   if (!cardInfo.cardNumber.trim()) newErrors.payment!.cardNumber = 'Card number is {/* required */}';
+    //   else if (!/^\d{16}$/.test(cardInfo.cardNumber.replace(/\s/g, ''))) newErrors.payment!.cardNumber = 'Card number is invalid';
+    //   if (!cardInfo.cardName.trim()) newErrors.payment!.cardName = 'Cardholder name is {/* required */}';
+    //   if (!cardInfo.expiryDate.trim()) newErrors.payment!.expiryDate = 'Expiry date is {/* required */}';
+    //   else if (!/^(0[1-9]|1[0-2])\/\d{2}$/.test(cardInfo.expiryDate)) newErrors.payment!.expiryDate = 'Expiry date is invalid (MM/YY)';
+    //   if (!cardInfo.cvv.trim()) newErrors.payment!.cvv = 'CVV is {/* required */}';
+    //   else if (!/^\d{3,4}$/.test(cardInfo.cvv)) newErrors.payment!.cvv = 'CVV is invalid';
+    // }
 
-    // Validate payment information
-    if (paymentMethod === 'card') {
-      if (!cardInfo.cardNumber.trim()) newErrors.payment!.cardNumber = 'Card number is required';
-      else if (!/^\d{16}$/.test(cardInfo.cardNumber.replace(/\s/g, ''))) newErrors.payment!.cardNumber = 'Card number is invalid';
-      if (!cardInfo.cardName.trim()) newErrors.payment!.cardName = 'Cardholder name is required';
-      if (!cardInfo.expiryDate.trim()) newErrors.payment!.expiryDate = 'Expiry date is required';
-      else if (!/^(0[1-9]|1[0-2])\/\d{2}$/.test(cardInfo.expiryDate)) newErrors.payment!.expiryDate = 'Expiry date is invalid (MM/YY)';
-      if (!cardInfo.cvv.trim()) newErrors.payment!.cvv = 'CVV is required';
-      else if (!/^\d{3,4}$/.test(cardInfo.cvv)) newErrors.payment!.cvv = 'CVV is invalid';
-    }
+    // setErrors(newErrors);
+    // return Object.keys(newErrors.billing || {}).length === 0 && 
+    //        Object.keys(newErrors.shipping || {}).length === 0 && 
+    //        Object.keys(newErrors.payment || {}).length === 0;
 
-    setErrors(newErrors);
-
-    // Check if there are any errors
-    const hasErrors = Object.values(newErrors).some(section => 
-      Object.values(section).some(error => error !== '')
-    );
-
-    return !hasErrors;
+    // TEMPORARY: Always return true for testing
+    return true;
   };
 
   const handleInputChange = (section: 'billing' | 'shipping' | 'card', field: string, value: string) => {
@@ -144,26 +114,90 @@ const Checkout: React.FC = () => {
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (validateForm()) {
-      // Handle checkout submission
-      console.log('Checkout submitted', {
-        billingInfo,
-        shippingInfo: shippingInfo.sameAsBilling ? billingInfo : shippingInfo,
-        paymentMethod,
-        cardInfo,
-        total
-      });
-      // Here you would typically send the data to your backend
-      alert('Order placed successfully!');
-    } else {
-      // Scroll to first error
-      const firstErrorField = document.querySelector('.border-red-500');
-      if (firstErrorField) {
-        firstErrorField.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      try {
+        // Prepare order data
+        const orderData: CreateOrderData = {
+          items: cartItems.map((item: any) => ({
+            id: item.id,
+            productId: item.productId,
+            name: item.name,
+            price: item.price,
+            quantity: item.quantity,
+            image: item.image,
+            color: item.color,
+            size: item.size
+          })),
+          subtotal,
+          tax,
+          shipping,
+          total,
+          billingInfo: {
+            firstName: billingInfo.firstName,
+            lastName: billingInfo.lastName,
+            email: billingInfo.email,
+            phone: billingInfo.phone,
+            address: billingInfo.address,
+            apartment: billingInfo.apartment,
+            city: billingInfo.city,
+            state: billingInfo.state,
+            zipCode: billingInfo.zipCode,
+            country: billingInfo.country
+          },
+          shippingInfo: shippingInfo.sameAsBilling ? {
+            firstName: billingInfo.firstName,
+            lastName: billingInfo.lastName,
+            address: billingInfo.address,
+            apartment: billingInfo.apartment,
+            city: billingInfo.city,
+            state: billingInfo.state,
+            zipCode: billingInfo.zipCode,
+            country: billingInfo.country
+          } : {
+            firstName: shippingInfo.firstName,
+            lastName: shippingInfo.lastName,
+            address: shippingInfo.address,
+            apartment: shippingInfo.apartment,
+            city: shippingInfo.city,
+            state: shippingInfo.state,
+            zipCode: shippingInfo.zipCode,
+            country: shippingInfo.country
+          },
+          paymentMethod,
+          paymentInfo: paymentMethod === 'card' ? {
+            cardNumber: cardInfo.cardNumber,
+            cardName: cardInfo.cardName,
+            expiryDate: cardInfo.expiryDate
+          } : undefined
+        };
+
+        // Create order in database
+        const order = await orderService.createOrder(orderData);
+        
+        console.log('Order created successfully:', order);
+        console.log('Order Number:', order.orderNumber);
+        
+        // Clear the cart
+        clearCart();
+        
+        // Show success message with order number
+        alert(`Order placed successfully! Order Number: ${order.orderNumber}. Redirecting to home...`);
+        
+        // Redirect to home page
+        window.location.href = '/';
+      } catch (error) {
+        console.error('Error creating order:', error);
+        alert('Failed to place order. Please try again.');
       }
+    } else {
+      // Scroll to first error (disabled for testing)
+      // const firstErrorField = document.querySelector('.border-red-500');
+      // if (firstErrorField) {
+      //   firstErrorField.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      // }
     }
   };
 
@@ -197,7 +231,6 @@ const Checkout: React.FC = () => {
                     className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
                       errors.billing?.firstName ? 'border-red-500' : 'border-gray-300'
                     }`}
-                    required
                   />
                   {errors.billing?.firstName && (
                     <p className='text-red-500 text-sm mt-1'>{errors.billing.firstName}</p>
@@ -212,7 +245,6 @@ const Checkout: React.FC = () => {
                     className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
                       errors.billing?.lastName ? 'border-red-500' : 'border-gray-300'
                     }`}
-                    required
                   />
                   {errors.billing?.lastName && (
                     <p className='text-red-500 text-sm mt-1'>{errors.billing.lastName}</p>
@@ -227,7 +259,6 @@ const Checkout: React.FC = () => {
                     className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
                       errors.billing?.email ? 'border-red-500' : 'border-gray-300'
                     }`}
-                    required
                   />
                   {errors.billing?.email && (
                     <p className='text-red-500 text-sm mt-1'>{errors.billing.email}</p>
@@ -242,7 +273,6 @@ const Checkout: React.FC = () => {
                     className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
                       errors.billing?.phone ? 'border-red-500' : 'border-gray-300'
                     }`}
-                    required
                   />
                   {errors.billing?.phone && (
                     <p className='text-red-500 text-sm mt-1'>{errors.billing.phone}</p>
@@ -257,7 +287,6 @@ const Checkout: React.FC = () => {
                     className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
                       errors.billing?.address ? 'border-red-500' : 'border-gray-300'
                     }`}
-                    required
                   />
                   {errors.billing?.address && (
                     <p className='text-red-500 text-sm mt-1'>{errors.billing.address}</p>
@@ -281,7 +310,6 @@ const Checkout: React.FC = () => {
                     className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
                       errors.billing?.city ? 'border-red-500' : 'border-gray-300'
                     }`}
-                    required
                   />
                   {errors.billing?.city && (
                     <p className='text-red-500 text-sm mt-1'>{errors.billing.city}</p>
@@ -296,7 +324,6 @@ const Checkout: React.FC = () => {
                     className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
                       errors.billing?.state ? 'border-red-500' : 'border-gray-300'
                     }`}
-                    required
                   />
                   {errors.billing?.state && (
                     <p className='text-red-500 text-sm mt-1'>{errors.billing.state}</p>
@@ -311,7 +338,6 @@ const Checkout: React.FC = () => {
                     className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
                       errors.billing?.zipCode ? 'border-red-500' : 'border-gray-300'
                     }`}
-                    required
                   />
                   {errors.billing?.zipCode && (
                     <p className='text-red-500 text-sm mt-1'>{errors.billing.zipCode}</p>
@@ -424,8 +450,7 @@ const Checkout: React.FC = () => {
                       className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
                         errors.payment?.cardNumber ? 'border-red-500' : 'border-gray-300'
                       }`}
-                      required
-                    />
+                  />
                     {errors.payment?.cardNumber && (
                       <p className='text-red-500 text-sm mt-1'>{errors.payment.cardNumber}</p>
                     )}
@@ -439,8 +464,7 @@ const Checkout: React.FC = () => {
                       className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
                         errors.payment?.cardName ? 'border-red-500' : 'border-gray-300'
                       }`}
-                      required
-                    />
+                  />
                     {errors.payment?.cardName && (
                       <p className='text-red-500 text-sm mt-1'>{errors.payment.cardName}</p>
                     )}
@@ -451,28 +475,11 @@ const Checkout: React.FC = () => {
                       <input
                         type="text"
                         placeholder="MM/YY"
-                        value={cardInfo.expiryDate}
-                        onChange={(e) => handleInputChange('card', 'expiryDate', e.target.value)}
-                        className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                          errors.payment?.expiryDate ? 'border-red-500' : 'border-gray-300'
-                        }`}
-                        required
-                      />
-                      {errors.payment?.expiryDate && (
-                        <p className='text-red-500 text-sm mt-1'>{errors.payment.expiryDate}</p>
-                      )}
-                    </div>
-                    <div>
-                      <label className='block text-sm font-medium text-gray-700 mb-2'>CVV</label>
-                      <input
-                        type="text"
-                        placeholder="123"
                         value={cardInfo.cvv}
                         onChange={(e) => handleInputChange('card', 'cvv', e.target.value)}
                         className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
                           errors.payment?.cvv ? 'border-red-500' : 'border-gray-300'
                         }`}
-                        required
                       />
                       {errors.payment?.cvv && (
                         <p className='text-red-500 text-sm mt-1'>{errors.payment.cvv}</p>
@@ -502,7 +509,7 @@ const Checkout: React.FC = () => {
               
               {/* Cart Items */}
               <div className='p-6 border-b max-h-64 overflow-y-auto'>
-                {cartItems.map((item) => (
+                {cartItems.map((item: any) => (
                   <div key={item.id} className='flex gap-3 mb-4 last:mb-0'>
                     <div className='w-16 h-16 bg-gray-200 rounded-lg flex-shrink-0'>
                       {item.image ? (

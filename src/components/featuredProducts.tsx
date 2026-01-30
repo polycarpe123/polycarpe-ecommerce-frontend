@@ -1,5 +1,6 @@
-import React, { useRef, useState } from "react";
+import React, { useRef } from "react";
 import { useNavigate } from "react-router-dom";
+import { useWishlist } from '../contexts/WishlistContext';
 
 interface FP { 
   id: number;
@@ -81,14 +82,20 @@ const products: FP[] = [
 ];
 
 const FeaturedProducts: React.FC = () => {
-  const [wl, setWl] = useState<number[]>([]);
+  const { toggleWishlist, isInWishlist } = useWishlist();
   const scrollRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
 
-  const toggle = (id: number) =>
-    setWl((prev) =>
-      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
-    );
+  const toggle = (product: FP) => {
+    const wishlistItem = {
+      id: product.id,
+      name: product.name,
+      price: product.price,
+      image: product.image,
+      category: product.category
+    };
+    toggleWishlist(wishlistItem);
+  };
 
   const scroll = (dir: "left" | "right") => {
     if (!scrollRef.current) return;
@@ -130,11 +137,11 @@ const FeaturedProducts: React.FC = () => {
                         </span>
                       )}
                       <button
-                        onClick={() => toggle(p.id)}
+                        onClick={() => toggle(p)}
                         aria-label="Wishlist"
                         className="absolute top-2 right-2 p-2 bg-white/80 rounded-full hover:bg-white z-10"
                       >
-                        <span className={`text-lg ${wl.includes(p.id) ? 'text-red-500' : 'text-gray-400'}`}>
+                        <span className={`text-lg ${isInWishlist(p.id) ? 'text-red-500' : 'text-gray-400'}`}>
                           ♥
                         </span>
                       </button>

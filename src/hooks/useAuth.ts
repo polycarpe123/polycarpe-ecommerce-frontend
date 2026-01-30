@@ -1,5 +1,5 @@
 // Custom hook for authentication
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { authService } from '../services/authService';
 import type { User, LoginCredentials, RegisterData } from '../services/authService';
 
@@ -9,8 +9,43 @@ export const useAuth = () => {
   const [error, setError] = useState<string | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
-  // Disabled automatic auth check - user must explicitly login
-  // This prevents loading issues on app startup
+  // Check for existing token on mount
+  useEffect(() => {
+    const initAuth = async () => {
+      const token = localStorage.getItem('authToken');
+      const storedUser = localStorage.getItem('user');
+      
+      if (token && storedUser) {
+        try {
+          // Restore user from localStorage
+          const user = JSON.parse(storedUser);
+          setUser(user);
+          setIsAuthenticated(true);
+          console.log('User restored from localStorage:', user.firstName);
+          
+          // Optionally validate token with backend
+          // try {
+          //   const response = await authService.getCurrentUser();
+          //   setUser(response);
+          //   setIsAuthenticated(true);
+          // } catch (error) {
+          //   // Token is invalid, clear storage
+          //   localStorage.removeItem('authToken');
+          //   localStorage.removeItem('user');
+          //   setIsAuthenticated(false);
+          // }
+        } catch (error) {
+          console.error('Error restoring user session:', error);
+          // Clear invalid data
+          localStorage.removeItem('authToken');
+          localStorage.removeItem('user');
+          setIsAuthenticated(false);
+        }
+      }
+    };
+    
+    initAuth();
+  }, []);
 
   const login = useCallback(async (credentials: LoginCredentials) => {
     try {
@@ -18,8 +53,9 @@ export const useAuth = () => {
       setError(null);
       const response = await authService.login(credentials);
       
-      // Store token
+      // Store token and user data
       localStorage.setItem('authToken', response.token);
+      localStorage.setItem('user', JSON.stringify(response.user));
       
       setUser(response.user);
       setIsAuthenticated(true);
@@ -62,6 +98,7 @@ export const useAuth = () => {
     } finally {
       // Clear local storage and state
       localStorage.removeItem('authToken');
+      localStorage.removeItem('user');
       setUser(null);
       setIsAuthenticated(false);
     }
