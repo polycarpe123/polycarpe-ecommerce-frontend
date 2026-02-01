@@ -117,12 +117,14 @@ export const useCart = () => {
       
       // Set empty cart object instead of null to ensure proper state updates
       const emptyCart: Cart = {
-        id: 'cart-1',
+        id: 'cart-' + Date.now(),
         items: [],
-        total: 0.00,
-        subtotal: 0.00,
-        tax: 0.00,
+        total: 0,
+        subtotal: 0,
+        tax: 0,
         shipping: 0,
+        discount: 0,
+        status: 'active',
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString()
       };
@@ -154,7 +156,7 @@ export const useCart = () => {
   }, [cart]);
 
   const getCartTotal = useCallback(() => {
-    if (!cart) return 0;
+    if (!cart || !cart.total) return 0;
     return cart.total;
   }, [cart]);
 

@@ -17,7 +17,7 @@ import {
   ArrowUp,
   ArrowDown
 } from 'lucide-react';
-import { useApp } from '../../contexts/AppContext';
+import { useApp } from '../../../contexts/AppContext';
 
 interface StatCard {
   title: string;
@@ -225,7 +225,7 @@ const AdminDashboard: React.FC = () => {
                       <p className="text-sm text-gray-500">2 hours ago</p>
                     </div>
                     <div className="text-right">
-                      <p className="font-medium text-gray-900">${(order * 45.99).toFixed(2)}</p>
+                      <p className="font-medium text-gray-900">${((order || 0) * 45.99).toFixed(2)}</p>
                       <p className="text-sm text-green-600">Completed</p>
                     </div>
                   </div>
@@ -266,7 +266,7 @@ const AdminDashboard: React.FC = () => {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-gray-900">${(index + 1) * 15.99}</td>
                       <td className="px-6 py-4 whitespace-nowrap text-gray-900">{Math.floor(Math.random() * 100) + 20}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-gray-900">${(Math.floor(Math.random() * 1000) + 500).toFixed(2)}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-gray-900">${((Math.floor(Math.random() * 1000) + 500) || 0).toFixed(2)}</td>
                     </tr>
                   ))}
                 </tbody>

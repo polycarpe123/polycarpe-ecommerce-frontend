@@ -10,7 +10,7 @@ import {
   TrendingUp,
   Settings
 } from 'lucide-react';
-import { useApp } from '../../contexts/AppContext';
+import { useApp } from '../../../contexts/AppContext';
 
 const AdminAnalytics: React.FC = () => {
   const { user, isAuthenticated } = useApp();

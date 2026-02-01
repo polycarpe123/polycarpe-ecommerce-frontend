@@ -17,7 +17,7 @@ import {
   Clock,
   XCircle
 } from 'lucide-react';
-import { useApp } from '../../contexts/AppContext';
+import { useApp } from '../../../contexts/AppContext';
 
 interface Order {
   id: string;
@@ -296,7 +296,7 @@ const AdminOrders: React.FC = () => {
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{order.customer}</td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{order.date}</td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{order.items}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${order.total.toFixed(2)}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${(order.total || 0).toFixed(2)}</td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center">
                           {getStatusIcon(order.status)}

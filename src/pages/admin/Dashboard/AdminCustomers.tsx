@@ -14,7 +14,7 @@ import {
   Phone,
   MapPin
 } from 'lucide-react';
-import { useApp } from '../../contexts/AppContext';
+import { useApp } from '../../../contexts/AppContext';
 
 interface Customer {
   id: number;
@@ -171,7 +171,7 @@ const AdminCustomers: React.FC = () => {
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{customer.totalOrders}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${customer.totalSpent.toFixed(2)}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${(customer.totalSpent || 0).toFixed(2)}</td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{customer.joinDate}</td>
                     </tr>
                   ))}

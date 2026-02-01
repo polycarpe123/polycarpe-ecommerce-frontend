@@ -11,7 +11,7 @@ import {
   Settings,
   Save
 } from 'lucide-react';
-import { useApp } from '../../contexts/AppContext';
+import { useApp } from '../../../contexts/AppContext';
 
 const AdminSettings: React.FC = () => {
   const { user, isAuthenticated } = useApp();

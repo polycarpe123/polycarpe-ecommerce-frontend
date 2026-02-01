@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { useApp } from '../contexts/AppContext';
 import { CreditCard, Truck, Shield, User } from 'lucide-react';
-import { orderService, type CreateOrderData } from '../services/orderService';
+import { orderService, type CreateOrderRequest } from '../services/orderService';
+import { useCart } from '../contexts/CartContext';
+import OrderConfirmationModal from '../components/OrderConfirmationModal';
+import '../styles/OrderModal.css';
 
 const Checkout: React.FC = () => {
-  const { cart, clearCart } = useApp();
+  const { cart, clearCart } = useCart();
   
   const cartItems = cart?.items || [];
   
@@ -14,17 +16,25 @@ const Checkout: React.FC = () => {
   const tax = cart?.tax || 0;
   const total = cart?.total || 0;
 
+  // Modal state
+  const [showOrderModal, setShowOrderModal] = useState(false);
+  const [orderDetails, setOrderDetails] = useState({
+    orderNumber: '',
+    totalAmount: 0,
+    itemCount: 0
+  });
+
   // Form states
   const [billingInfo, setBillingInfo] = useState({
     firstName: '',
     lastName: '',
     email: '',
     phone: '',
-    address: '',
-    apartment: '',
+    addressLine1: '',
+    addressLine2: '',
     city: '',
     state: '',
-    zipCode: '',
+    postalCode: '',
     country: 'United States'
   });
 
@@ -32,76 +42,76 @@ const Checkout: React.FC = () => {
     sameAsBilling: true,
     firstName: '',
     lastName: '',
-    address: '',
-    apartment: '',
+    addressLine1: '',
+    addressLine2: '',
     city: '',
     state: '',
-    zipCode: '',
+    postalCode: '',
     country: 'United States'
   });
 
-  const [paymentMethod, setPaymentMethod] = useState('card');
+  const [paymentMethod, setPaymentMethod] = useState('credit_card');
   const [cardInfo, setCardInfo] = useState({
     cardNumber: '',
-    cardName: '',
-    expiryDate: '',
+    cardholderName: '',
+    expiryMonth: '',
+    expiryYear: '',
     cvv: ''
   });
 
-  // Validation errors state (temporarily disabled for testing)
-  const [errors /*, setErrors*/] = useState<{
+  // Validation errors state
+  const [errors, setErrors] = useState<{
     billing?: Record<string, string>;
     shipping?: Record<string, string>;
     payment?: Record<string, string>;
-  }>({});
+  }>({
+    billing: {},
+    shipping: {},
+    payment: {}
+  });
 
   const validateForm = (): boolean => {
-    // TEMPORARILY DISABLED: All validation commented out for testing
-    // const newErrors: typeof errors = {
-    //   billing: {},
-    //   shipping: {},
-    //   payment: {}
-    // };
+    const newErrors: typeof errors = {
+      billing: {},
+      shipping: {},
+      payment: {}
+    };
 
-    // // Validate billing information
-    // if (!billingInfo.firstName.trim()) newErrors.billing!.firstName = 'First name is {/* required */}';
-    // if (!billingInfo.lastName.trim()) newErrors.billing!.lastName = 'Last name is {/* required */}';
-    // if (!billingInfo.email.trim()) newErrors.billing!.email = 'Email is {/* required */}';
-    // else if (!/\S+@\S+\.\S+/.test(billingInfo.email)) newErrors.billing!.email = 'Email is invalid';
-    // if (!billingInfo.phone.trim()) newErrors.billing!.phone = 'Phone number is {/* required */}';
-    // if (!billingInfo.address.trim()) newErrors.billing!.address = 'Street address is {/* required */}';
-    // if (!billingInfo.city.trim()) newErrors.billing!.city = 'City is {/* required */}';
-    // if (!billingInfo.state.trim()) newErrors.billing!.state = 'State is {/* required */}';
-    // if (!billingInfo.zipCode.trim()) newErrors.billing!.zipCode = 'ZIP code is {/* required */}';
+    // Validate billing information
+    if (!billingInfo.firstName.trim()) newErrors.billing!.firstName = 'First name is required';
+    if (!billingInfo.lastName.trim()) newErrors.billing!.lastName = 'Last name is required';
+    if (!billingInfo.email.trim()) newErrors.billing!.email = 'Email is required';
+    else if (!/\S+@\S+\.\S+/.test(billingInfo.email)) newErrors.billing!.email = 'Email is invalid';
+    if (!billingInfo.phone.trim()) newErrors.billing!.phone = 'Phone number is required';
+    if (!billingInfo.addressLine1.trim()) newErrors.billing!.addressLine1 = 'Street address is required';
+    if (!billingInfo.city.trim()) newErrors.billing!.city = 'City is required';
+    if (!billingInfo.state.trim()) newErrors.billing!.state = 'State is required';
+    if (!billingInfo.postalCode.trim()) newErrors.billing!.postalCode = 'ZIP code is required';
 
-    // // Validate shipping information if different from billing
-    // if (!shippingInfo.sameAsBilling) {
-    //   if (!shippingInfo.firstName.trim()) newErrors.shipping!.firstName = 'First name is {/* required */}';
-    //   if (!shippingInfo.lastName.trim()) newErrors.shipping!.lastName = 'Last name is {/* required */}';
-    //   if (!shippingInfo.address.trim()) newErrors.shipping!.address = 'Street address is {/* required */}';
-    //   if (!shippingInfo.city.trim()) newErrors.shipping!.city = 'City is {/* required */}';
-    //   if (!shippingInfo.state.trim()) newErrors.shipping!.state = 'State is {/* required */}';
-    //   if (!shippingInfo.zipCode.trim()) newErrors.shipping!.zipCode = 'ZIP code is {/* required */}';
-    // }
+    // Validate shipping information if different from billing
+    if (!shippingInfo.sameAsBilling) {
+      if (!shippingInfo.firstName.trim()) newErrors.shipping!.firstName = 'First name is required';
+      if (!shippingInfo.lastName.trim()) newErrors.shipping!.lastName = 'Last name is required';
+      if (!shippingInfo.addressLine1.trim()) newErrors.shipping!.addressLine1 = 'Street address is required';
+      if (!shippingInfo.city.trim()) newErrors.shipping!.city = 'City is required';
+      if (!shippingInfo.state.trim()) newErrors.shipping!.state = 'State is required';
+      if (!shippingInfo.postalCode.trim()) newErrors.shipping!.postalCode = 'ZIP code is required';
+    }
 
-    // // Validate payment information
-    // if (paymentMethod === 'card') {
-    //   if (!cardInfo.cardNumber.trim()) newErrors.payment!.cardNumber = 'Card number is {/* required */}';
-    //   else if (!/^\d{16}$/.test(cardInfo.cardNumber.replace(/\s/g, ''))) newErrors.payment!.cardNumber = 'Card number is invalid';
-    //   if (!cardInfo.cardName.trim()) newErrors.payment!.cardName = 'Cardholder name is {/* required */}';
-    //   if (!cardInfo.expiryDate.trim()) newErrors.payment!.expiryDate = 'Expiry date is {/* required */}';
-    //   else if (!/^(0[1-9]|1[0-2])\/\d{2}$/.test(cardInfo.expiryDate)) newErrors.payment!.expiryDate = 'Expiry date is invalid (MM/YY)';
-    //   if (!cardInfo.cvv.trim()) newErrors.payment!.cvv = 'CVV is {/* required */}';
-    //   else if (!/^\d{3,4}$/.test(cardInfo.cvv)) newErrors.payment!.cvv = 'CVV is invalid';
-    // }
+    // Validate payment information
+    if (paymentMethod === 'credit_card') {
+      if (!cardInfo.cardNumber.trim()) newErrors.payment!.cardNumber = 'Card number is required';
+      else if (!/^\d{16}$/.test(cardInfo.cardNumber.replace(/\s/g, ''))) newErrors.payment!.cardNumber = 'Card number is invalid';
+      if (!cardInfo.cardholderName.trim()) newErrors.payment!.cardholderName = 'Cardholder name is required';
+      if (!cardInfo.expiryMonth.trim() || !cardInfo.expiryYear.trim()) newErrors.payment!.expiryDate = 'Expiry date is required';
+      if (!cardInfo.cvv.trim()) newErrors.payment!.cvv = 'CVV is required';
+      else if (!/^\d{3,4}$/.test(cardInfo.cvv)) newErrors.payment!.cvv = 'CVV is invalid';
+    }
 
-    // setErrors(newErrors);
-    // return Object.keys(newErrors.billing || {}).length === 0 && 
-    //        Object.keys(newErrors.shipping || {}).length === 0 && 
-    //        Object.keys(newErrors.payment || {}).length === 0;
-
-    // TEMPORARY: Always return true for testing
-    return true;
+    setErrors(newErrors);
+    return Object.keys(newErrors.billing || {}).length === 0 && 
+           Object.keys(newErrors.shipping || {}).length === 0 && 
+           Object.keys(newErrors.payment || {}).length === 0;
   };
 
   const handleInputChange = (section: 'billing' | 'shipping' | 'card', field: string, value: string) => {
@@ -119,87 +129,126 @@ const Checkout: React.FC = () => {
     
     if (validateForm()) {
       try {
-        // Prepare order data
-        const orderData: CreateOrderData = {
+        // Prepare order data with new interface
+        const orderData: CreateOrderRequest = {
           items: cartItems.map((item: any) => ({
             id: item.id,
             productId: item.productId,
-            name: item.name,
-            price: item.price,
+            productName: item.name,
+            productImage: item.image,
             quantity: item.quantity,
-            image: item.image,
+            price: item.price,
+            totalPrice: item.totalPrice || (item.price * item.quantity),
             color: item.color,
-            size: item.size
+            size: item.size,
+            sku: item.sku
           })),
           subtotal,
           tax,
           shipping,
+          discount: 0, // TODO: Add discount support
           total,
-          billingInfo: {
+          shippingAddress: shippingInfo.sameAsBilling ? {
             firstName: billingInfo.firstName,
             lastName: billingInfo.lastName,
             email: billingInfo.email,
             phone: billingInfo.phone,
-            address: billingInfo.address,
-            apartment: billingInfo.apartment,
+            addressLine1: billingInfo.addressLine1,
+            addressLine2: billingInfo.addressLine2,
             city: billingInfo.city,
             state: billingInfo.state,
-            zipCode: billingInfo.zipCode,
-            country: billingInfo.country
-          },
-          shippingInfo: shippingInfo.sameAsBilling ? {
-            firstName: billingInfo.firstName,
-            lastName: billingInfo.lastName,
-            address: billingInfo.address,
-            apartment: billingInfo.apartment,
-            city: billingInfo.city,
-            state: billingInfo.state,
-            zipCode: billingInfo.zipCode,
+            postalCode: billingInfo.postalCode,
             country: billingInfo.country
           } : {
             firstName: shippingInfo.firstName,
             lastName: shippingInfo.lastName,
-            address: shippingInfo.address,
-            apartment: shippingInfo.apartment,
+            email: billingInfo.email,
+            phone: billingInfo.phone,
+            addressLine1: shippingInfo.addressLine1,
+            addressLine2: shippingInfo.addressLine2,
             city: shippingInfo.city,
             state: shippingInfo.state,
-            zipCode: shippingInfo.zipCode,
+            postalCode: shippingInfo.postalCode,
             country: shippingInfo.country
           },
-          paymentMethod,
-          paymentInfo: paymentMethod === 'card' ? {
-            cardNumber: cardInfo.cardNumber,
-            cardName: cardInfo.cardName,
-            expiryDate: cardInfo.expiryDate
-          } : undefined
+          billingAddress: {
+            firstName: billingInfo.firstName,
+            lastName: billingInfo.lastName,
+            email: billingInfo.email,
+            phone: billingInfo.phone,
+            addressLine1: billingInfo.addressLine1,
+            addressLine2: billingInfo.addressLine2,
+            city: billingInfo.city,
+            state: billingInfo.state,
+            postalCode: billingInfo.postalCode,
+            country: billingInfo.country
+          },
+          paymentMethod: {
+            id: 'card-' + Date.now(),
+            type: paymentMethod as 'credit_card' | 'paypal' | 'cash_on_delivery',
+            last4: cardInfo.cardNumber.slice(-4),
+            brand: 'visa', // TODO: Detect card brand
+            expiryMonth: cardInfo.expiryMonth,
+            expiryYear: cardInfo.expiryYear,
+            cardholderName: cardInfo.cardholderName
+          },
+          shippingMethod: 'standard', // TODO: Add shipping options
+          notes: ''
         };
 
-        // Create order in database
+        // Create order using new OrderService
         const order = await orderService.createOrder(orderData);
         
         console.log('Order created successfully:', order);
         console.log('Order Number:', order.orderNumber);
         
         // Clear the cart
-        clearCart();
+        await clearCart();
         
-        // Show success message with order number
-        alert(`Order placed successfully! Order Number: ${order.orderNumber}. Redirecting to home...`);
+        // Set order details for modal
+        setOrderDetails({
+          orderNumber: order.orderNumber,
+          totalAmount: order.total,
+          itemCount: order.items.length
+        });
         
-        // Redirect to home page
-        window.location.href = '/';
+        // Show confirmation modal
+        setShowOrderModal(true);
       } catch (error) {
         console.error('Error creating order:', error);
         alert('Failed to place order. Please try again.');
       }
     } else {
-      // Scroll to first error (disabled for testing)
-      // const firstErrorField = document.querySelector('.border-red-500');
-      // if (firstErrorField) {
-      //   firstErrorField.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      // }
+      // Scroll to first error
+      const firstErrorField = document.querySelector('.border-red-500');
+      if (firstErrorField) {
+        firstErrorField.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
     }
   };
+
+  // Check if cart is empty
+  if (cartItems.length === 0) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="bg-white rounded-lg shadow-sm p-8 max-w-md">
+            <div className="text-6xl mb-4">🛒</div>
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">Your cart is empty</h2>
+            <p className="text-gray-600 mb-8">
+              Add some items to your cart before proceeding to checkout.
+            </p>
+            <Link
+              to="/cart"
+              className="inline-flex items-center gap-2 bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              Go to Cart
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className='min-h-screen bg-gray-50'>
@@ -279,25 +328,25 @@ const Checkout: React.FC = () => {
                   )}
                 </div>
                 <div className='md:col-span-2'>
-                  <label className='block text-sm font-medium text-gray-700 mb-2'>Street Address</label>
+                  <label className='block text-sm font-medium text-gray-700 mb-2'>Address Line 1</label>
                   <input
                     type="text"
-                    value={billingInfo.address}
-                    onChange={(e) => handleInputChange('billing', 'address', e.target.value)}
+                    value={billingInfo.addressLine1}
+                    onChange={(e) => handleInputChange('billing', 'addressLine1', e.target.value)}
                     className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                      errors.billing?.address ? 'border-red-500' : 'border-gray-300'
+                      errors.billing?.addressLine1 ? 'border-red-500' : 'border-gray-300'
                     }`}
                   />
-                  {errors.billing?.address && (
-                    <p className='text-red-500 text-sm mt-1'>{errors.billing.address}</p>
+                  {errors.billing?.addressLine1 && (
+                    <p className='text-red-500 text-sm mt-1'>{errors.billing.addressLine1}</p>
                   )}
                 </div>
                 <div className='md:col-span-2'>
-                  <label className='block text-sm font-medium text-gray-700 mb-2'>Apartment, Suite, etc. (optional)</label>
+                  <label className='block text-sm font-medium text-gray-700 mb-2'>Address Line 2</label>
                   <input
                     type="text"
-                    value={billingInfo.apartment}
-                    onChange={(e) => handleInputChange('billing', 'apartment', e.target.value)}
+                    value={billingInfo.addressLine2}
+                    onChange={(e) => handleInputChange('billing', 'addressLine2', e.target.value)}
                     className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500'
                   />
                 </div>
@@ -330,17 +379,17 @@ const Checkout: React.FC = () => {
                   )}
                 </div>
                 <div>
-                  <label className='block text-sm font-medium text-gray-700 mb-2'>ZIP Code</label>
+                  <label className='block text-sm font-medium text-gray-700 mb-2'>Postal Code</label>
                   <input
                     type="text"
-                    value={billingInfo.zipCode}
-                    onChange={(e) => handleInputChange('billing', 'zipCode', e.target.value)}
+                    value={billingInfo.postalCode}
+                    onChange={(e) => handleInputChange('billing', 'postalCode', e.target.value)}
                     className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                      errors.billing?.zipCode ? 'border-red-500' : 'border-gray-300'
+                      errors.billing?.postalCode ? 'border-red-500' : 'border-gray-300'
                     }`}
                   />
-                  {errors.billing?.zipCode && (
-                    <p className='text-red-500 text-sm mt-1'>{errors.billing.zipCode}</p>
+                  {errors.billing?.postalCode && (
+                    <p className='text-red-500 text-sm mt-1'>{errors.billing.postalCode}</p>
                   )}
                 </div>
                 <div>
@@ -459,14 +508,14 @@ const Checkout: React.FC = () => {
                     <label className='block text-sm font-medium text-gray-700 mb-2'>Cardholder Name</label>
                     <input
                       type="text"
-                      value={cardInfo.cardName}
-                      onChange={(e) => handleInputChange('card', 'cardName', e.target.value)}
+                      value={cardInfo.cardholderName}
+                      onChange={(e) => handleInputChange('card', 'cardholderName', e.target.value)}
                       className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                        errors.payment?.cardName ? 'border-red-500' : 'border-gray-300'
+                        errors.payment?.cardholderName ? 'border-red-500' : 'border-gray-300'
                       }`}
                   />
-                    {errors.payment?.cardName && (
-                      <p className='text-red-500 text-sm mt-1'>{errors.payment.cardName}</p>
+                    {errors.payment?.cardholderName && (
+                      <p className='text-red-500 text-sm mt-1'>{errors.payment.cardholderName}</p>
                     )}
                   </div>
                   <div className='grid grid-cols-2 gap-4'>
@@ -496,7 +545,7 @@ const Checkout: React.FC = () => {
               onClick={handleSubmit}
               className='w-full bg-blue-600 text-white py-4 rounded-lg hover:bg-blue-700 transition-colors font-medium text-lg'
             >
-              Place Order • ${total.toFixed(2)}
+              Place Order • ${(total || 0).toFixed(2)}
             </button>
           </div>
 
@@ -526,7 +575,7 @@ const Checkout: React.FC = () => {
                         {item.size && <span>{item.size}</span>}
                       </p>
                       <p className='text-sm font-medium text-gray-900'>
-                        ${item.price.toFixed(2)} × {item.quantity}
+                        ${(item.price || 0).toFixed(2)} × {item.quantity || 0}
                       </p>
                     </div>
                   </div>
@@ -537,31 +586,31 @@ const Checkout: React.FC = () => {
               <div className='p-6 space-y-4'>
                 <div className='flex justify-between'>
                   <span className='text-gray-600'>Subtotal</span>
-                  <span className='font-medium'>${subtotal.toFixed(2)}</span>
+                  <span className='font-medium'>${(subtotal || 0).toFixed(2)}</span>
                 </div>
                 
                 <div className='flex justify-between'>
                   <span className='text-gray-600'>Shipping</span>
                   <span className='font-medium'>
-                    {shipping === 0 ? 'FREE' : `$${shipping.toFixed(2)}`}
+                    {(shipping || 0) === 0 ? 'FREE' : `$${(shipping || 0).toFixed(2)}`}
                   </span>
                 </div>
                 
                 <div className='flex justify-between'>
                   <span className='text-gray-600'>Tax</span>
-                  <span className='font-medium'>${tax.toFixed(2)}</span>
+                  <span className='font-medium'>${(tax || 0).toFixed(2)}</span>
                 </div>
                 
-                {shipping > 0 && (
+                {(shipping || 0) > 0 && (
                   <div className='bg-green-50 border border-green-200 rounded-lg p-3 text-sm'>
-                    <p className='text-green-800 font-medium'>Add ${(200 - subtotal).toFixed(2)} more for FREE shipping!</p>
+                    <p className='text-green-800 font-medium'>Add ${((200 - (subtotal || 0)).toFixed(2))} more for FREE shipping!</p>
                   </div>
                 )}
                 
                 <div className='border-t pt-4'>
                   <div className='flex justify-between mb-4'>
                     <span className='text-lg font-bold text-gray-900'>Total</span>
-                    <span className='text-lg font-bold text-gray-900'>${total.toFixed(2)}</span>
+                    <span className='text-lg font-bold text-gray-900'>${(total || 0).toFixed(2)}</span>
                   </div>
                 </div>
               </div>
@@ -580,6 +629,15 @@ const Checkout: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* Order Confirmation Modal */}
+      <OrderConfirmationModal
+        isOpen={showOrderModal}
+        onClose={() => setShowOrderModal(false)}
+        orderNumber={orderDetails.orderNumber}
+        totalAmount={orderDetails.totalAmount}
+        itemCount={orderDetails.itemCount}
+      />
     </div>
   );
 };

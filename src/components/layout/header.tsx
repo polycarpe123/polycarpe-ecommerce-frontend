@@ -3,8 +3,10 @@ import { Link } from 'react-router-dom';
 import CartModal from '../CartModal';
 import AuthModal from '../AuthModal';
 import LogoutModal from '../LogoutModal';
+import SearchDropdown from '../SearchDropdown';
 import { useApp } from '../../contexts/AppContext';
 import { useWishlist } from '../../contexts/WishlistContext';
+import { safeCurrency } from '../../utils/formatting';
 
 const Navigation: React.FC = () => {
     const [isCartOpen, setIsCartOpen] = useState(false);
@@ -101,21 +103,11 @@ const Navigation: React.FC = () => {
             </button>
 
             {/* Desktop Search Bar */}
-            <div className="hidden md:flex flex-1 max-w-2xl mx-8 bg-white rounded-full flex items-center p-1">
-              <input
-                type="text"
-                placeholder="Search for products, categories, brands, sku..."
-                className="flex-1 px-4 py-2 text-gray-700 bg-transparent outline-none"
+            <div className="hidden md:flex flex-1 max-w-2xl mx-8">
+              <SearchDropdown 
+                placeholder="Search for products, categories, brands..."
+                className="bg-white rounded-full flex items-center p-1"
               />
-              <select className="px-3 py-1 text-gray-600 bg-transparent outline-none text-sm">
-                <option>All Categories</option>
-                <option>Electronics</option>
-                <option>Clothing</option>
-                <option>Books</option>
-              </select>
-              <button className="bg-blue-600 text-white px-4 py-2 rounded-full hover:bg-blue-700">
-                Search
-              </button>
             </div>
 
             {/* Right Section */}
@@ -161,7 +153,7 @@ const Navigation: React.FC = () => {
                     {cartCount}
                   </span>
                 </button>
-                <span className="text-white text-sm font-medium">${cartTotal.toFixed(2)}</span>
+                <span className="text-white text-sm font-medium">{safeCurrency(cartTotal)}</span>
               </div>
             </div>
 
@@ -185,15 +177,11 @@ const Navigation: React.FC = () => {
           </div>
 
           {/* Mobile Search Bar */}
-          <div className="md:hidden mt-4 bg-white rounded-full flex items-center p-1">
-            <input
-              type="text"
+          <div className="md:hidden mt-4">
+            <SearchDropdown 
               placeholder="Search products..."
-              className="flex-1 px-4 py-2 text-gray-700 bg-transparent outline-none text-sm"
+              className="bg-white rounded-full flex items-center p-1"
             />
-            <button className="bg-blue-600 text-white px-4 py-2 rounded-full hover:bg-blue-700 text-sm">
-              Search
-            </button>
           </div>
         </div>
       </div>

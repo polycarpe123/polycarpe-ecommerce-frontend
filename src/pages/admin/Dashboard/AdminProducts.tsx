@@ -12,7 +12,7 @@ import {
   TrendingUp,
   ShoppingCart
 } from 'lucide-react';
-import { useApp } from '../../contexts/AppContext';
+import { useApp } from '../../../contexts/AppContext';
 
 interface Product {
   id: number;

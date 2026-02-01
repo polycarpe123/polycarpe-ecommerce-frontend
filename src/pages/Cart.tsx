@@ -1,25 +1,43 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { useApp } from '../contexts/AppContext';
 import { ArrowLeft, Trash2, Plus, Minus } from 'lucide-react';
+import { useCart } from '../contexts/CartContext';
+import { safeCurrency, safeNumber } from '../utils/formatting';
 
 const Cart: React.FC = () => {
-  const { cart, updateQuantity, removeFromCart } = useApp();
+  const { cart, loading, subtotal, total, updateCartItem, removeFromCart } = useCart();
   
   const cartItems = cart?.items || [];
-  
-  const subtotal = cart?.subtotal || 0;
   const shipping = cart?.shipping || 0;
   const tax = cart?.tax || 0;
-  const total = cart?.total || 0;
 
-  const handleUpdateQuantity = (id: string | number, quantity: number) => {
-    updateQuantity(id, quantity);
+  const handleUpdateQuantity = async (id: string | number, quantity: number) => {
+    if (quantity < 1) return;
+    try {
+      await updateCartItem(id, quantity);
+    } catch (error) {
+      console.error('Failed to update quantity:', error);
+    }
   };
 
-  const handleRemoveItem = (id: string | number) => {
-    removeFromCart(id);
+  const handleRemoveItem = async (id: string | number) => {
+    try {
+      await removeFromCart(id);
+    } catch (error) {
+      console.error('Failed to remove item:', error);
+    }
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Loading cart...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className='min-h-screen bg-gray-50'>
@@ -90,8 +108,8 @@ const Cart: React.FC = () => {
                           {/* Price and Quantity */}
                           <div className='flex justify-between items-end'>
                             <div className='text-right'>
-                              <p className='font-bold text-lg text-gray-900'>${item.price.toFixed(2)}</p>
-                              <p className='text-sm text-gray-500'>Total: ${(item.price * item.quantity).toFixed(2)}</p>
+                              <p className='font-bold text-lg text-gray-900'>{safeCurrency(item.price)}</p>
+                              <p className='text-sm text-gray-500'>Total: {safeCurrency(safeNumber(item.price) * safeNumber(item.quantity))}</p>
                             </div>
                             
                             {/* Quantity Controls */}
@@ -140,31 +158,31 @@ const Cart: React.FC = () => {
                 <div className='p-6 space-y-4'>
                   <div className='flex justify-between'>
                     <span className='text-gray-600'>Subtotal</span>
-                    <span className='font-medium'>${subtotal.toFixed(2)}</span>
+                    <span className='font-medium'>{safeCurrency(subtotal)}</span>
                   </div>
                   
                   <div className='flex justify-between'>
                     <span className='text-gray-600'>Shipping</span>
                     <span className='font-medium'>
-                      {shipping === 0 ? 'FREE' : `$${shipping.toFixed(2)}`}
+                      {safeNumber(shipping) === 0 ? 'FREE' : safeCurrency(shipping)}
                     </span>
                   </div>
                   
                   <div className='flex justify-between'>
                     <span className='text-gray-600'>Tax</span>
-                    <span className='font-medium'>${tax.toFixed(2)}</span>
+                    <span className='font-medium'>{safeCurrency(tax)}</span>
                   </div>
                   
-                  {shipping > 0 && (
+                  {safeNumber(shipping) > 0 && (
                     <div className='bg-green-50 border border-green-200 rounded-lg p-3 text-sm'>
-                      <p className='text-green-800 font-medium'>Add ${(200 - subtotal).toFixed(2)} more for FREE shipping!</p>
+                      <p className='text-green-800 font-medium'>Add {safeCurrency(200 - safeNumber(subtotal))} more for FREE shipping!</p>
                     </div>
                   )}
                   
                   <div className='border-t pt-4'>
                     <div className='flex justify-between mb-4'>
                       <span className='text-lg font-bold text-gray-900'>Total</span>
-                      <span className='text-lg font-bold text-gray-900'>${total.toFixed(2)}</span>
+                      <span className='text-lg font-bold text-gray-900'>{safeCurrency(total)}</span>
                     </div>
                     
                     <Link 

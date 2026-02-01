@@ -1,854 +1,487 @@
 import React, { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { Heart, Star, Share2, Truck, RefreshCw, Shield } from 'lucide-react';
-import CartModal from "../components/CartModal";
-import { useApp } from '../contexts/AppContext';
-
-const PRODUCTS: Record<string, any> = {
-  "97": {
-    id: 97,
-    name: "Unisex Blue Graphic Backpack",
-    price: "$15.00",
-    oldPrice: null,
-    rating: 3,
-    reviews: 1,
-    images: [
-      "https://picsum.photos/900/900?random=200",
-      "https://picsum.photos/900/900?random=201",
-      "https://picsum.photos/900/900?random=202",
-      "https://picsum.photos/900/900?random=203",
-    ],
-    colors: [
-      { name: "Dark Blue", hex: "#1E3A8A" },
-      { name: "Red", hex: "#DC2626" },
-    ],
-    sizes: ["One Size"],
-    description: "Two-way zip closure. Top carry handle; padded, adjustable shoulder straps. Flat base with protective feet for stability. Nylon with leather trim. Designer Laptopbags.",
-    brand: "Fashion",
-    fabric: "Nylon with leather trim",
-    fit: "One Size",
-    features: [
-      "30 Day Return Policy",
-      "Cash on Delivery available", 
-      "Free Delivery"
-    ],
-    offers: [
-      {
-        title: "Bank Offer",
-        description: "10% instant discount on VISA Cards",
-        terms: "T & C"
-      },
-      {
-        title: "Special Price", 
-        description: "Get extra 20% off (price inclusive of discount)",
-        terms: "T & C"
-      },
-      {
-        title: "No cost EMI",
-        description: "$9/month. Standard EMI also available",
-        terms: "View Plans"
-      }
-    ],
-    specifications: {
-      "Material": "Nylon with leather trim",
-      "Closure": "Two-way zip",
-      "Straps": "Padded, adjustable shoulder straps",
-      "Base": "Flat base with protective feet",
-      "Handle": "Top carry handle",
-      "Category": "Designer Laptopbags"
-    }
-  },
-  "1": {
-    id: 1,
-    name: "Men Hooded Navy Blue & Grey Track Jacket",
-    price: "$70.00",
-    oldPrice: "$86.00",
-    rating: 4.5,
-    reviews: 3,
-    images: [
-      "https://picsum.photos/900/900?random=50",
-      "https://picsum.photos/900/900?random=51",
-      "https://picsum.photos/900/900?random=52",
-      "https://picsum.photos/900/900?random=53",
-    ],
-    colors: [
-      { name: "Navy", hex: "#1D4ED8" },
-      { name: "Grey", hex: "#6B7280" },
-      { name: "Black", hex: "#111827" },
-    ],
-    sizes: ["XS", "S", "M", "L", "XL", "XXL"],
-    description: "Comfortable and stylish men's hooded track jacket featuring navy blue and grey color blocking.",
-    brand: "SportWear",
-    fabric: "100% polyester • Water-resistant • Breathable",
-    fit: "Regular fit with adjustable drawstrings",
-    features: [
-      "30 Day Return Policy",
-      "Cash on Delivery available",
-      "Free Delivery"
-    ],
-    offers: [],
-    specifications: {
-      "Material": "100% Polyester",
-      "Fit": "Regular fit",
-      "Features": "Water-resistant, Breathable",
-      "Closure": "Zip closure with drawstrings",
-      "Pockets": "Side pockets"
-    }
-  },
-  "2": {
-    id: 2,
-    name: "Women Off White Printed Blouse",
-    price: "$47.00",
-    oldPrice: "$67.00",
-    rating: 2.7,
-    reviews: 3,
-    images: [
-      "https://picsum.photos/900/900?random=54",
-      "https://picsum.photos/900/900?random=55",
-      "https://picsum.photos/900/900?random=56",
-      "https://picsum.photos/900/900?random=57",
-    ],
-    colors: [
-      { name: "Off White", hex: "#F5F5F0" },
-      { name: "Cream", hex: "#FFFDD0" },
-      { name: "Beige", hex: "#F5DEB3" },
-    ],
-    sizes: ["XS", "S", "M", "L", "XL"],
-    description:
-      "Elegant women's printed blouse in off-white with beautiful floral print.",
-    brand: "Fashion Co",
-    fabric: "100% cotton • Breathable • Comfortable",
-    fit: "Regular fit • Short sleeves",
-  },
-  "3": {
-    id: 3,
-    name: "Men Blue Colourblocked Mid-Top Sneakers",
-    price: "$45.00",
-    oldPrice: "$56.00",
-    rating: 5,
-    reviews: 3,
-    images: [
-      "https://picsum.photos/900/900?random=58",
-      "https://picsum.photos/900/900?random=59",
-      "https://picsum.photos/900/900?random=60",
-      "https://picsum.photos/900/900?random=61",
-    ],
-    colors: [
-      { name: "Blue", hex: "#1D4ED8" },
-      { name: "White", hex: "#FFFFFF" },
-      { name: "Black", hex: "#111827" },
-    ],
-    sizes: ["6", "7", "8", "9", "10", "11", "12"],
-    description:
-      "Stylish blue and white color-blocked sneakers for casual everyday wear.",
-    brand: "SportStyle",
-    fabric: "Leather & Canvas • Rubber Sole",
-    fit: "Unisex sizing • True to size",
-  },
-  "4": {
-    id: 4,
-    name: "Women Blue Skinny Fit Stretchable Jeans",
-    price: "$70.00",
-    oldPrice: "$85.00",
-    rating: 4,
-    reviews: 2,
-    images: [
-      "https://picsum.photos/900/900?random=62",
-      "https://picsum.photos/900/900?random=63",
-      "https://picsum.photos/900/900?random=64",
-      "https://picsum.photos/900/900?random=65",
-    ],
-    colors: [
-      { name: "Dark Blue", hex: "#1E3A8A" },
-      { name: "Light Blue", hex: "#3B82F6" },
-      { name: "Black", hex: "#111827" },
-    ],
-    sizes: ["XS", "S", "M", "L", "XL"],
-    description:
-      "Comfortable and flattering women's skinny jeans with stretch fabric.",
-    brand: "DenimPro",
-    fabric: "98% Cotton, 2% Elastane • Stretchable",
-    fit: "Skinny fit • Mid-rise",
-  },
-  "5": {
-    id: 5,
-    name: "Men Khaki Solid Bomber Jacket",
-    price: "$124.00",
-    oldPrice: "$155.00",
-    rating: 3.5,
-    reviews: 1,
-    images: [
-      "https://picsum.photos/900/900?random=96",
-      "https://picsum.photos/900/900?random=97",
-      "https://picsum.photos/900/900?random=98",
-      "https://picsum.photos/900/900?random=99",
-    ],
-    colors: [
-      { name: "Khaki", hex: "#C9B37E" },
-      { name: "Navy", hex: "#001A33" },
-      { name: "Olive", hex: "#556B2F" },
-    ],
-    sizes: ["S", "M", "L", "XL", "XXL"],
-    description:
-      "Premium men's bomber jacket in solid khaki color. Perfect for casual outings.",
-    brand: "CasualWear",
-    fabric: "100% Polyester • Water-resistant",
-    fit: "Regular fit • Zip closure",
-  },
-  "6": {
-    id: 6,
-    name: "Men Navy Blue & Grey Track Jacket",
-    price: "$105.00",
-    oldPrice: "$130.00",
-    rating: 4,
-    reviews: 2,
-    images: [
-      "https://picsum.photos/900/900?random=116",
-      "https://picsum.photos/900/900?random=117",
-      "https://picsum.photos/900/900?random=118",
-      "https://picsum.photos/900/900?random=119",
-    ],
-    colors: [
-      { name: "Navy", hex: "#001A33" },
-      { name: "Grey", hex: "#808080" },
-      { name: "Black", hex: "#000000" },
-    ],
-    sizes: ["S", "M", "L", "XL", "XXL"],
-    description: "Classic track jacket in navy blue with grey accents.",
-    brand: "TrackWear",
-    fabric: "Polyester blend • Breathable",
-    fit: "Athletic fit",
-  },
-  "21": {
-    id: 21,
-    name: "Floral Midi Summer Dress",
-    price: "$58.00",
-    oldPrice: "$68.00",
-    rating: 4.5,
-    reviews: 4,
-    images: [
-      "https://picsum.photos/900/900?random=120",
-      "https://picsum.photos/900/900?random=121",
-      "https://picsum.photos/900/900?random=122",
-      "https://picsum.photos/900/900?random=123",
-    ],
-    colors: [
-      { name: "Pink", hex: "#EC4899" },
-      { name: "Yellow", hex: "#F59E0B" },
-      { name: "Green", hex: "#10B981" },
-    ],
-    sizes: ["XS", "S", "M", "L", "XL"],
-    description: "Beautiful floral midi dress perfect for summer occasions.",
-    brand: "SummerStyle",
-    fabric: "100% Cotton • Breathable",
-    fit: "A-line fit • V-neckline",
-  },
-  "22": {
-    id: 22,
-    name: "Beige Trench Coat",
-    price: "$129.00",
-    oldPrice: "$165.00",
-    rating: 3.8,
-    reviews: 2,
-    images: [
-      "https://picsum.photos/900/900?random=124",
-      "https://picsum.photos/900/900?random=125",
-      "https://picsum.photos/900/900?random=126",
-      "https://picsum.photos/900/900?random=127",
-    ],
-    colors: [
-      { name: "Beige", hex: "#F5DEB3" },
-      { name: "Camel", hex: "#C19A6B" },
-      { name: "Black", hex: "#000000" },
-    ],
-    sizes: ["XS", "S", "M", "L", "XL"],
-    description:
-      "Timeless beige trench coat - a wardrobe essential for every season.",
-    brand: "ClassicWear",
-    fabric: "100% Wool • Premium quality",
-    fit: "Tailored fit • Double-breasted",
-  },
-  "23": {
-    id: 23,
-    name: "Classic Leather Tote",
-    price: "$95.00",
-    oldPrice: "$105.00",
-    rating: 4.2,
-    reviews: 3,
-    images: [
-      "https://picsum.photos/900/900?random=128",
-      "https://picsum.photos/900/900?random=129",
-      "https://picsum.photos/900/900?random=130",
-      "https://picsum.photos/900/900?random=131",
-    ],
-    colors: [
-      { name: "Brown", hex: "#8B6F47" },
-      { name: "Black", hex: "#000000" },
-      { name: "Tan", hex: "#D2B48C" },
-    ],
-    sizes: ["One Size"],
-    description: "Spacious leather tote bag perfect for daily use and travel.",
-    brand: "LeatherCo",
-    fabric: "Premium leather • Durable",
-    fit: "Large capacity • Shoulder handles",
-  },
-  "24": {
-    id: 24,
-    name: "White Button-Up Shirt",
-    price: "$42.00",
-    oldPrice: "$52.00",
-    rating: 4.6,
-    reviews: 5,
-    images: [
-      "https://picsum.photos/900/900?random=132",
-      "https://picsum.photos/900/900?random=133",
-      "https://picsum.photos/900/900?random=134",
-      "https://picsum.photos/900/900?random=135",
-    ],
-    colors: [
-      { name: "White", hex: "#FFFFFF" },
-      { name: "Light Blue", hex: "#ADD8E6" },
-      { name: "Pink", hex: "#FFC0CB" },
-    ],
-    sizes: ["XS", "S", "M", "L", "XL"],
-    description:
-      "Classic white button-up shirt - versatile and timeless piece.",
-    brand: "Essentials",
-    fabric: "100% Cotton • Wrinkle-resistant",
-    fit: "Fitted • Long sleeves",
-  },
-  "25": {
-    id: 25,
-    name: "High-Waist Skinny Jeans",
-    price: "$68.00",
-    oldPrice: "$78.00",
-    rating: 4.3,
-    reviews: 3,
-    images: [
-      "https://picsum.photos/900/900?random=136",
-      "https://picsum.photos/900/900?random=137",
-      "https://picsum.photos/900/900?random=138",
-      "https://picsum.photos/900/900?random=139",
-    ],
-    colors: [
-      { name: "Dark Blue", hex: "#00008B" },
-      { name: "Light Blue", hex: "#87CEEB" },
-      { name: "Black", hex: "#000000" },
-    ],
-    sizes: ["XS", "S", "M", "L", "XL"],
-    description: "Flattering high-waist skinny jeans with great stretch.",
-    brand: "DenimCo",
-    fabric: "Cotton blend • Stretchable",
-    fit: "Skinny fit • High-waist",
-  },
-  "26": {
-    id: 26,
-    name: "Court Sneakers",
-    price: "$59.00",
-    oldPrice: "$69.00",
-    rating: 4.4,
-    reviews: 3,
-    images: [
-      "https://picsum.photos/900/900?random=104",
-      "https://picsum.photos/900/900?random=105",
-      "https://picsum.photos/900/900?random=106",
-      "https://picsum.photos/900/900?random=107",
-    ],
-    colors: [
-      { name: "White", hex: "#FFFFFF" },
-      { name: "Black", hex: "#000000" },
-      { name: "Grey", hex: "#808080" },
-    ],
-    sizes: ["5", "6", "7", "8", "9", "10", "11"],
-    description: "Classic court-style sneakers for casual everyday wear.",
-    brand: "SneakerCo",
-    fabric: "Canvas & Rubber",
-    fit: "Unisex • True to size",
-  },
-  "41": {
-    id: 41,
-    name: "Puffer Jacket in Olive",
-    price: "$138.00",
-    oldPrice: "$157.00",
-    rating: 4.1,
-    reviews: 2,
-    images: [
-      "https://picsum.photos/900/900?random=100",
-      "https://picsum.photos/900/900?random=101",
-      "https://picsum.photos/900/900?random=102",
-      "https://picsum.photos/900/900?random=103",
-    ],
-    colors: [
-      { name: "Olive", hex: "#556B2F" },
-      { name: "Black", hex: "#000000" },
-      { name: "Navy", hex: "#001A33" },
-    ],
-    sizes: ["XS", "S", "M", "L", "XL", "XXL"],
-    description: "Warm and stylish puffer jacket in trendy olive color.",
-    brand: "WinterWear",
-    fabric: "Polyester • Insulated",
-    fit: "Regular fit • Water-resistant",
-  },
-  "42": {
-    id: 42,
-    name: "Minimalist Leather Backpack",
-    price: "$110.00",
-    oldPrice: "$135.00",
-    rating: 4.7,
-    reviews: 6,
-    images: [
-      "https://picsum.photos/900/900?random=108",
-      "https://picsum.photos/900/900?random=109",
-      "https://picsum.photos/900/900?random=110",
-      "https://picsum.photos/900/900?random=111",
-    ],
-    colors: [
-      { name: "Black", hex: "#000000" },
-      { name: "Brown", hex: "#8B4513" },
-      { name: "Grey", hex: "#808080" },
-    ],
-    sizes: ["One Size"],
-    description:
-      "Sleek minimalist leather backpack perfect for work and travel.",
-    brand: "UrbanStyle",
-    fabric: "Premium leather • Durable",
-    fit: "Spacious • Laptop compartment",
-  },
-  "43": {
-    id: 43,
-    name: "Retro High-Top Sneakers",
-    price: "$85.00",
-    oldPrice: "$100.00",
-    rating: 4.2,
-    reviews: 3,
-    images: [
-      "https://picsum.photos/900/900?random=112",
-      "https://picsum.photos/900/900?random=113",
-      "https://picsum.photos/900/900?random=114",
-      "https://picsum.photos/900/900?random=115",
-    ],
-    colors: [
-      { name: "Black", hex: "#111827" },
-      { name: "Gold", hex: "#F59E0B" },
-      { name: "White", hex: "#FFFFFF" },
-    ],
-    sizes: ["5", "6", "7", "8", "9", "10", "11", "12"],
-    description: "Vintage-inspired high-top sneakers with modern comfort.",
-    brand: "RetroStyle",
-    fabric: "Canvas & Rubber • Cushioned",
-    fit: "High-top • Ankle support",
-  },
-  "44": {
-    id: 44,
-    name: "Cable Knit Sweater",
-    price: "$64.00",
-    oldPrice: "$75.00",
-    rating: 4.5,
-    reviews: 4,
-    images: [
-      "https://picsum.photos/900/900?random=150",
-      "https://picsum.photos/900/900?random=151",
-      "https://picsum.photos/900/900?random=152",
-      "https://picsum.photos/900/900?random=153",
-    ],
-    colors: [
-      { name: "Cream", hex: "#FFFDD0" },
-      { name: "Navy", hex: "#001A33" },
-      { name: "Grey", hex: "#808080" },
-    ],
-    sizes: ["XS", "S", "M", "L", "XL"],
-    description: "Cozy cable knit sweater perfect for layering in any season.",
-    brand: "CozyWear",
-    fabric: "100% Wool • Soft",
-    fit: "Regular fit • Crew neck",
-  },
-  "45": {
-    id: 45,
-    name: "Weekend Duffle Bag",
-    price: "$88.00",
-    oldPrice: "$100.00",
-    rating: 4.3,
-    reviews: 3,
-    images: [
-      "https://picsum.photos/900/900?random=154",
-      "https://picsum.photos/900/900?random=155",
-      "https://picsum.photos/900/900?random=156",
-      "https://picsum.photos/900/900?random=157",
-    ],
-    colors: [
-      { name: "Black", hex: "#000000" },
-      { name: "Navy", hex: "#001A33" },
-      { name: "Grey", hex: "#808080" },
-    ],
-    sizes: ["One Size"],
-    description:
-      "Spacious duffle bag perfect for weekend getaways and gym trips.",
-    brand: "TravelPro",
-    fabric: "Canvas & Leather • Durable",
-    fit: "Large capacity • Multiple compartments",
-  },
-  "46": {
-    id: 46,
-    name: "Denim Chore Jacket",
-    price: "$92.00",
-    oldPrice: "$110.00",
-    rating: 4,
-    reviews: 2,
-    images: [
-      "https://picsum.photos/900/900?random=158",
-      "https://picsum.photos/900/900?random=159",
-      "https://picsum.photos/900/900?random=160",
-      "https://picsum.photos/900/900?random=161",
-    ],
-    colors: [
-      { name: "Indigo", hex: "#4B0082" },
-      { name: "Black", hex: "#000000" },
-      { name: "Vintage", hex: "#6495ED" },
-    ],
-    sizes: ["XS", "S", "M", "L", "XL"],
-    description: "Classic denim chore jacket with authentic vintage look.",
-    brand: "DenimCo",
-    fabric: "100% Denim • Durable",
-    fit: "Relaxed fit • Button-front",
-  },
-};
+import { productService, type Product } from '../services/productService';
 
 const ProductDetail: React.FC = () => {
-  const { name } = useParams();
+  const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
   
-  // Find product by name (decode URI and search through all products)
-  const decodedName = name ? decodeURIComponent(name) : "";
-  
-  // Try to find by name first, then by ID
-  let product = Object.values(PRODUCTS).find(p => p.name === decodedName);
-  
-  // If not found by name, try to find by ID
-  if (!product && name) {
-    const productId = parseInt(name);
-    if (!isNaN(productId)) {
-      product = Object.values(PRODUCTS).find(p => p.id === productId);
-    }
-  }
+  const [product, setProduct] = useState<Product | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [selectedImage, setSelectedImage] = useState(0);
+  const [selectedColor, setSelectedColor] = useState<string>('');
+  const [selectedSize, setSelectedSize] = useState<string>('');
+  const [quantity, setQuantity] = useState(1);
+  const [relatedProducts, setRelatedProducts] = useState<Product[]>([]);
+  const [activeTab, setActiveTab] = useState<'description' | 'reviews' | 'specifications'>('description');
+  const [isWishlisted, setIsWishlisted] = useState(false);
 
-  const [selectedImg, setSelectedImg] = useState(0);
-  const [selectedColor, setSelectedColor] = useState(0);
-  const [selectedSize, setSelectedSize] = useState("M");
-  const [qty, setQty] = useState(1);
-  const [tab, setTab] = useState("desc");
-  const [isCartOpen, setIsCartOpen] = useState(false);
-  const [productImages, setProductImages] = useState<string[]>([]);
-  
-  // Use global cart context
-  const { addToCart, cart, updateQuantity, removeFromCart } = useApp();
-
-  // Load dynamic images from Unsplash
   useEffect(() => {
-    if (product) {
-      // Temporarily disable Unsplash API calls to prevent page crashes
-      console.log('Product loaded:', product.name);
-      console.log('Unsplash API temporarily disabled to prevent crashes');
+    const fetchProduct = async () => {
+      if (!id) return;
       
-      // Use original images for now
-      setProductImages(product.images);
+      try {
+        setLoading(true);
+        setError(null);
+        const productData = await productService.getProduct(id);
+        setProduct(productData);
+        
+        // Set default selections
+        if (productData.colors && productData.colors.length > 0) {
+          setSelectedColor(productData.colors[0].name);
+        }
+        if (productData.sizes && productData.sizes.length > 0) {
+          setSelectedSize(productData.sizes[0].name);
+        }
+        
+        // Fetch related products
+        try {
+          const related = await productService.getRelatedProducts(id);
+          setRelatedProducts(related);
+        } catch (relatedError) {
+          console.warn('Could not load related products:', relatedError);
+          setRelatedProducts([]);
+        }
+        
+      } catch (err) {
+        setError('Failed to load product. Please try again later.');
+        console.error('Error fetching product:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProduct();
+  }, [id]);
+
+  const handleAddToCart = () => {
+    if (!product) return;
+    
+    alert(`${product.name} added to cart!`);
+  };
+
+  const handleBuyNow = () => {
+    handleAddToCart();
+    navigate('/checkout');
+  };
+
+  const handleWishlist = () => {
+    setIsWishlisted(!isWishlisted);
+    alert(isWishlisted ? 'Removed from wishlist' : 'Added to wishlist!');
+  };
+
+  const handleShare = () => {
+    if (navigator.share) {
+      navigator.share({
+        title: product?.name,
+        text: product?.shortDescription || product?.description,
+        url: window.location.href,
+      });
+    } else {
+      navigator.clipboard.writeText(window.location.href);
+      alert('Product link copied to clipboard!');
     }
-  }, [product]);
+  };
 
-  // Use dynamic images if available, otherwise fallback to original
-  const displayImages = productImages.length > 0 ? productImages : (product?.images || []);
+  const isInStock = () => {
+    if (!product) return false;
+    if (product.stock === undefined) return true;
+    return product.stock > 0;
+  };
 
-  if (!product) {
+  if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50">
-        <div className="container px-4 max-w-7xl mx-auto py-16">
-          <div className="text-center">
-            <div className="max-w-md mx-auto">
-              <div className="bg-white rounded-lg shadow-sm p-8">
-                <div className="text-6xl mb-4">🔍</div>
-                <h2 className="text-2xl font-bold text-gray-900 mb-4">Product Not Found</h2>
-                <p className="text-gray-600 mb-8">The product you're looking for doesn't exist or has been removed.</p>
-                <a 
-                  href="/"
-                  className="inline-flex items-center gap-2 bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors"
-                >
-                  Continue Shopping
-                </a>
-              </div>
-            </div>
-          </div>
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Loading product...</p>
         </div>
       </div>
     );
   }
 
-  const discount = Math.round(
-    ((parseFloat(product.oldPrice) - parseFloat(product.price)) /
-      parseFloat(product.oldPrice)) *
-      100,
-  );
-
-  const handleAddToCart = () => {
-    if (!product) return;
-    
-    const cartItem = {
-      productId: product.id,
-      quantity: qty,
-      name: product.name,
-      price: parseFloat(product.price.replace('$', '')),
-      image: productImages[0] || product.images[0],
-      category: product.category,
-      color: product.colors?.[selectedColor]?.name,
-      size: selectedSize
-    };
-    
-    addToCart(cartItem);
-    setIsCartOpen(true);
-  };
+  if (error || !product) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-red-600 text-lg mb-4">{error || 'Product not found'}</p>
+          <button
+            onClick={() => navigate('/products')}
+            className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            Back to Products
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="container mx-auto px-4 py-8 max-w-7xl">
-        <nav className="text-sm text-gray-600 mb-6">
-          <a href="#" className="hover:text-blue-600">Home</a> / <a href="#" className="hover:text-blue-600">Shop</a> / {product.name}
+    <div className="min-h-screen bg-gray-50 py-8">
+      <div className="container mx-auto px-4 max-w-7xl">
+        {/* Breadcrumb */}
+        <nav className="flex items-center space-x-2 text-sm text-gray-600 mb-8">
+          <button onClick={() => navigate('/')} className="hover:text-blue-600">Home</button>
+          <span>/</span>
+          <button onClick={() => navigate('/products')} className="hover:text-blue-600">Products</button>
+          <span>/</span>
+          <button onClick={() => navigate(`/category/${product.category}`)} className="hover:text-blue-600">
+            {product.category}
+          </button>
+          <span>/</span>
+          <span className="text-gray-900">{product.name}</span>
         </nav>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
-          {/* IMAGE GALLERY */}
-          <div>
-            <div className="mb-4">
-              <img src={displayImages[selectedImg]} alt={product.name} className="w-full h-96 object-cover rounded-lg" />
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
+          {/* Product Images */}
+          <div className="space-y-4">
+            <div className="aspect-square bg-white rounded-lg overflow-hidden relative">
+              <img
+                src={product.images[selectedImage]}
+                alt={product.name}
+                className="w-full h-full object-cover"
+              />
+              <button
+                onClick={handleWishlist}
+                className="absolute top-4 right-4 bg-white p-2 rounded-full shadow-md hover:shadow-lg transition-shadow"
+              >
+                <Heart
+                  className={`w-5 h-5 ${isWishlisted ? 'fill-red-500 text-red-500' : 'text-gray-600'}`}
+                />
+              </button>
             </div>
-            <div className="flex gap-2">
-              {displayImages.map((img: string, i: number) => (
+            <div className="grid grid-cols-4 gap-2">
+              {product.images.map((image, index) => (
                 <button
-                  key={i}
-                  className={`w-16 h-16 rounded border-2 overflow-hidden ${
-                    selectedImg === i ? "border-blue-500" : "border-gray-200"
+                  key={index}
+                  onClick={() => setSelectedImage(index)}
+                  className={`aspect-square bg-white rounded-lg overflow-hidden border-2 transition-all ${
+                    selectedImage === index ? 'border-blue-600' : 'border-gray-200 hover:border-gray-300'
                   }`}
-                  onClick={() => setSelectedImg(i)}
                 >
-                  <img src={img} alt={`${product.name} ${i + 1}`} className="w-full h-full object-cover" />
+                  <img
+                    src={image}
+                    alt={`${product.name} ${index + 1}`}
+                    className="w-full h-full object-cover"
+                  />
                 </button>
               ))}
             </div>
           </div>
 
-          {/* PRODUCT DETAILS */}
-          <div>
-            <h1 className="text-2xl font-bold mb-4">{product.name}</h1>
+          {/* Product Information */}
+          <div className="space-y-6">
+            {/* Product Title and Price */}
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900 mb-2">{product.name}</h1>
+              <div className="flex items-center space-x-4">
+                <span className="text-3xl font-bold text-blue-600">${product.price}</span>
+                {product.oldPrice && (
+                  <span className="text-xl text-gray-500 line-through">${product.oldPrice}</span>
+                )}
+                {product.oldPrice && (
+                  <span className="bg-green-100 text-green-800 px-2 py-1 rounded-full text-sm font-medium">
+                    {Math.round(((product.oldPrice - product.price) / product.oldPrice) * 100)}% OFF
+                  </span>
+                )}
+              </div>
+            </div>
 
-            <div className="flex items-center gap-2 mb-4">
-              <div className="flex">
+            {/* Rating and Reviews */}
+            <div className="flex items-center space-x-4">
+              <div className="flex items-center">
                 {[...Array(5)].map((_, i) => (
                   <Star
                     key={i}
-                    size={14}
-                    fill={
-                      i < Math.floor(product.rating) ? "currentColor" : "none"
-                    }
-                    className="text-yellow-400"
+                    className={`w-5 h-5 ${i < Math.floor(product.rating || 0) ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300'}`}
                   />
                 ))}
               </div>
-              <span className="text-sm text-gray-600">({product.reviews} reviews)</span>
+              <span className="text-gray-600">({product.reviews || 0} reviews)</span>
+              <button
+                onClick={() => setActiveTab('reviews')}
+                className="text-blue-600 hover:text-blue-700 text-sm"
+              >
+                Write a review
+              </button>
             </div>
 
-            <div className="flex items-center gap-3 mb-4">
-              <span className="text-2xl font-bold text-gray-900">{product.price}</span>
-              {product.oldPrice && (
-                <>
-                  <span className="text-lg text-gray-500 line-through">{product.oldPrice}</span>
-                  <span className="bg-red-100 text-red-800 px-2 py-1 rounded text-sm">Save {discount}%</span>
-                </>
+            {/* Stock Status */}
+            <div className="flex items-center space-x-2">
+              <div className={`w-3 h-3 rounded-full ${isInStock() ? 'bg-green-500' : 'bg-red-500'}`}></div>
+              <span className={`font-medium ${isInStock() ? 'text-green-600' : 'text-red-600'}`}>
+                {isInStock() ? 'In Stock' : 'Out of Stock'}
+              </span>
+              {product.stock !== undefined && (
+                <span className="text-gray-500">({product.stock} available)</span>
               )}
             </div>
 
-            <p className="text-green-600 font-medium mb-6">In Stock</p>
-
-            <div className="mb-6">
-              <label className="block text-sm font-medium mb-2">Color: {product.colors[selectedColor].name}</label>
-              <div className="flex gap-2">
-                {product.colors.map((color: any, i: number) => (
-                  <button
-                    key={i}
-                    className={`w-8 h-8 rounded-full border-2 ${
-                      i === selectedColor ? 'border-gray-800' : 'border-gray-300'
-                    }`}
-                    style={{ backgroundColor: color.hex }}
-                    onClick={() => setSelectedColor(i)}
-                    title={color.name}
-                  />
-                ))}
-              </div>
+            {/* Action Buttons */}
+            <div className="flex space-x-4">
+              <button
+                onClick={handleShare}
+                className="p-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+              >
+                <Share2 className="w-5 h-5 text-gray-600" />
+              </button>
             </div>
 
-            <div className="mb-6">
-              <label className="block text-sm font-medium mb-2">Size</label>
-              <div className="flex gap-2">
-                {product.sizes.map((size: string) => (
-                  <button
-                    key={size}
-                    className={`px-4 py-2 border rounded ${
-                      size === selectedSize
-                        ? 'border-blue-500 bg-blue-50 text-blue-600'
-                        : 'border-gray-300 hover:border-gray-400'
-                    }`}
-                    onClick={() => setSelectedSize(size)}
-                  >
-                    {size}
-                  </button>
-                ))}
+            {/* Color Selection */}
+            {product.colors && product.colors.length > 0 && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Color</label>
+                <div className="flex flex-wrap gap-2">
+                  {product.colors.map((color) => (
+                    <button
+                      key={color.name}
+                      onClick={() => setSelectedColor(color.name)}
+                      className={`flex items-center space-x-2 px-3 py-2 rounded-lg border-2 transition-all ${
+                        selectedColor === color.name
+                          ? 'border-blue-600 bg-blue-50'
+                          : 'border-gray-200 hover:border-gray-300'
+                      } ${!color.inStock ? 'opacity-50 cursor-not-allowed' : ''}`}
+                      disabled={!color.inStock}
+                    >
+                      <div
+                        className="w-5 h-5 rounded-full border border-gray-300"
+                        style={{ backgroundColor: color.hex }}
+                      ></div>
+                      <span className="text-sm">{color.name}</span>
+                    </button>
+                  ))}
+                </div>
               </div>
-            </div>
+            )}
 
-            <div className="mb-6">
-              <label className="block text-sm font-medium mb-2">Quantity</label>
-              <div className="flex items-center gap-2">
-                <button 
-                  onClick={() => setQty(Math.max(1, qty - 1))}
-                  className="w-8 h-8 border rounded flex items-center justify-center hover:bg-gray-50"
+            {/* Size Selection */}
+            {product.sizes && product.sizes.length > 0 && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Size</label>
+                <div className="flex flex-wrap gap-2">
+                  {product.sizes.map((size) => (
+                    <button
+                      key={size.name}
+                      onClick={() => setSelectedSize(size.name)}
+                      className={`px-4 py-2 rounded-lg border-2 transition-all ${
+                        selectedSize === size.name
+                          ? 'border-blue-600 bg-blue-50 text-blue-600'
+                          : 'border-gray-200 hover:border-gray-300'
+                      } ${!size.inStock ? 'opacity-50 cursor-not-allowed' : ''}`}
+                      disabled={!size.inStock}
+                    >
+                      {size.name}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Quantity */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Quantity</label>
+              <div className="flex items-center space-x-3">
+                <button
+                  onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                  className="w-10 h-10 rounded-lg border border-gray-300 flex items-center justify-center hover:bg-gray-50 transition-colors"
                 >
-                  −
+                  -
                 </button>
                 <input
                   type="number"
-                  value={qty}
-                  onChange={(e) =>
-                    setQty(Math.max(1, parseInt(e.target.value) || 1))
-                  }
-                  className="w-16 h-8 text-center border rounded"
-                  readOnly
+                  min="1"
+                  max={product.stock || 99}
+                  value={quantity}
+                  onChange={(e) => setQuantity(Math.max(1, parseInt(e.target.value) || 1))}
+                  className="w-20 text-center border border-gray-300 rounded-lg px-3 py-2"
                 />
-                <button 
-                  onClick={() => setQty(qty + 1)}
-                  className="w-8 h-8 border rounded flex items-center justify-center hover:bg-gray-50"
+                <button
+                  onClick={() => setQuantity(Math.min(product.stock || 99, quantity + 1))}
+                  className="w-10 h-10 rounded-lg border border-gray-300 flex items-center justify-center hover:bg-gray-50 transition-colors"
                 >
                   +
                 </button>
               </div>
             </div>
 
-            <div className="flex gap-3 mb-6">
-              <button 
+            {/* Action Buttons */}
+            <div className="flex space-x-4">
+              <button
                 onClick={handleAddToCart}
-                className="flex-1 bg-blue-600 text-white py-3 px-6 rounded hover:bg-blue-700"
+                disabled={!isInStock()}
+                className="flex-1 bg-blue-600 text-white py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
               >
-                + Add to Cart
+                Add to Cart
               </button>
-              <button 
-                onClick={() => alert("Proceeding to checkout")}
-                className="flex-1 bg-gray-900 text-white py-3 px-6 rounded hover:bg-gray-800"
+              <button
+                onClick={handleBuyNow}
+                disabled={!isInStock()}
+                className="flex-1 bg-green-600 text-white py-3 rounded-lg font-medium hover:bg-green-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
               >
                 Buy Now
               </button>
-              <button 
-                title="Add to Wishlist"
-                className="p-3 border rounded hover:bg-gray-50"
-              >
-                <Heart size={20} />
-              </button>
-              <button 
-                title="Share"
-                className="p-3 border rounded hover:bg-gray-50"
-              >
-                <Share2 size={20} />
-              </button>
             </div>
 
-            <div className="space-y-3">
-              <div className="flex items-center gap-3">
-                <Truck size={20} className="text-green-600" />
-                <div>
-                  <p className="font-medium">Free Delivery</p>
-                  <p className="text-sm text-gray-600">Orders over $50</p>
-                </div>
+            {/* Trust Badges */}
+            <div className="grid grid-cols-3 gap-4 py-4 border-t border-gray-200">
+              <div className="text-center">
+                <Truck className="w-6 h-6 text-blue-600 mx-auto mb-1" />
+                <p className="text-xs text-gray-600">Free Delivery</p>
               </div>
-              <div className="flex items-center gap-3">
-                <RefreshCw size={20} className="text-blue-600" />
-                <div>
-                  <p className="font-medium">30 Day Return</p>
-                  <p className="text-sm text-gray-600">Easy returns</p>
-                </div>
+              <div className="text-center">
+                <RefreshCw className="w-6 h-6 text-blue-600 mx-auto mb-1" />
+                <p className="text-xs text-gray-600">30 Day Returns</p>
               </div>
-              <div className="flex items-center gap-3">
-                <Shield size={20} className="text-purple-600" />
-                <div>
-                  <p className="font-medium">Safe Checkout</p>
-                  <p className="text-sm text-gray-600">Secure payment</p>
-                </div>
+              <div className="text-center">
+                <Shield className="w-6 h-6 text-blue-600 mx-auto mb-1" />
+                <p className="text-xs text-gray-600">Secure Payment</p>
               </div>
             </div>
-          </div>
-        </div>
 
-        {/* TABS */}
-        <div className="bg-white rounded-lg p-6">
-          <div className="flex border-b mb-6">
-            <button 
-              className={`px-4 py-2 font-medium ${
-                tab === "desc" ? 'border-b-2 border-blue-500 text-blue-600' : 'text-gray-600 hover:text-gray-900'
-              }`}
-              onClick={() => setTab("desc")}
-            >
-              Description
-            </button>
-            <button 
-              className={`px-4 py-2 font-medium ${
-                tab === "specs" ? 'border-b-2 border-blue-500 text-blue-600' : 'text-gray-600 hover:text-gray-900'
-              }`}
-              onClick={() => setTab("specs")}
-            >
-              Specifications
-            </button>
-            <button 
-              className={`px-4 py-2 font-medium ${
-                tab === "reviews" ? 'border-b-2 border-blue-500 text-blue-600' : 'text-gray-600 hover:text-gray-900'
-              }`}
-              onClick={() => setTab("reviews")}
-            >
-              Reviews ({product.reviews})
-            </button>
-          </div>
-
-          <div>
-            {tab === "desc" && (
+            {/* Product Features */}
+            {product.features && product.features.length > 0 && (
               <div>
-                <h3 className="text-lg font-semibold mb-3">Product Description</h3>
-                <p className="text-gray-700 mb-4">{product.description}</p>
-                <p className="text-gray-700">
-                  Consectetur adipiscing elit. Ut laoreet ligula in felis
-                  viverra egestas. Donec egestas sit amet augue convallis
-                  fermentum. Mauris at risus. Orci varius natoque penatibus et
-                  magnis dis parturient montes, nascetur ridiculus mus.
-                </p>
+                <h3 className="font-semibold text-gray-900 mb-2">Features</h3>
+                <ul className="space-y-1">
+                  {product.features.map((feature, index) => (
+                    <li key={index} className="flex items-center space-x-2 text-gray-600">
+                      <svg className="w-4 h-4 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                      </svg>
+                      <span>{feature}</span>
+                    </li>
+                  ))}
+                </ul>
               </div>
             )}
-            {tab === "specs" && (
+
+            {/* Offers */}
+            {product.offers && product.offers.length > 0 && (
               <div>
-                <h3 className="text-lg font-semibold mb-3">Specifications</h3>
+                <h3 className="font-semibold text-gray-900 mb-2">Available Offers</h3>
                 <div className="space-y-2">
-                  <p><strong>Brand:</strong> {product.brand}</p>
-                  <p><strong>Fabric:</strong> {product.fabric}</p>
-                  <p><strong>Fit:</strong> {product.fit}</p>
+                  {product.offers.map((offer, index) => (
+                    <div key={index} className="bg-blue-50 p-3 rounded-lg">
+                      <p className="font-medium text-blue-900">{offer}</p>
+                    </div>
+                  ))}
                 </div>
-              </div>
-            )}
-            {tab === "reviews" && (
-              <div>
-                <h3 className="text-lg font-semibold mb-3">Customer Reviews</h3>
-                <p className="text-gray-600">No reviews yet. Be the first to review this product!</p>
               </div>
             )}
           </div>
         </div>
+
+        {/* Product Tabs */}
+        <div className="mt-12 bg-white rounded-lg shadow-sm">
+          <div className="border-b border-gray-200">
+            <nav className="flex space-x-8 px-6">
+              {['description', 'reviews', 'specifications'].map((tab) => (
+                <button
+                  key={tab}
+                  onClick={() => setActiveTab(tab as any)}
+                  className={`py-4 px-1 border-b-2 font-medium text-sm capitalize transition-colors ${
+                    activeTab === tab
+                      ? 'border-blue-600 text-blue-600'
+                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  }`}
+                >
+                  {tab}
+                </button>
+              ))}
+            </nav>
+          </div>
+
+          <div className="p-6">
+            {activeTab === 'description' && (
+              <div className="prose max-w-none">
+                <p className="text-gray-700 leading-relaxed">{product.description}</p>
+              </div>
+            )}
+
+            {activeTab === 'reviews' && (
+              <div className="space-y-4">
+                <div className="text-center py-8 text-gray-500">
+                  <p>No reviews yet. Be the first to review this product!</p>
+                  <button className="mt-4 bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+                    Write a Review
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {activeTab === 'specifications' && (
+              <div className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <span className="font-medium text-gray-900">SKU:</span>
+                    <span className="ml-2 text-gray-600">{product.sku}</span>
+                  </div>
+                  <div>
+                    <span className="font-medium text-gray-900">Category:</span>
+                    <span className="ml-2 text-gray-600">{product.category}</span>
+                  </div>
+                  {product.brand && (
+                    <div>
+                      <span className="font-medium text-gray-900">Brand:</span>
+                      <span className="ml-2 text-gray-600">{product.brand}</span>
+                    </div>
+                  )}
+                  {product.fabric && (
+                    <div>
+                      <span className="font-medium text-gray-900">Fabric:</span>
+                      <span className="ml-2 text-gray-600">{product.fabric}</span>
+                    </div>
+                  )}
+                  {product.weight && (
+                    <div>
+                      <span className="font-medium text-gray-900">Weight:</span>
+                      <span className="ml-2 text-gray-600">{product.weight}g</span>
+                    </div>
+                  )}
+                  {product.dimensions && (
+                    <div>
+                      <span className="font-medium text-gray-900">Dimensions:</span>
+                      <span className="ml-2 text-gray-600">
+                        {product.dimensions.length} x {product.dimensions.width} x {product.dimensions.height} cm
+                      </span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Related Products */}
+        {relatedProducts.length > 0 && (
+          <div className="mt-12">
+            <h2 className="text-2xl font-bold text-gray-900 mb-6">Related Products</h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              {relatedProducts.map((relatedProduct) => (
+                <div
+                  key={relatedProduct.id}
+                  onClick={() => navigate(`/product/${relatedProduct.id}`)}
+                  className="bg-white rounded-lg shadow-sm overflow-hidden cursor-pointer hover:shadow-lg transition-shadow"
+                >
+                  <div className="aspect-square bg-gray-100">
+                    <img
+                      src={relatedProduct.images[0]}
+                      alt={relatedProduct.name}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                  <div className="p-4">
+                    <h3 className="font-medium text-gray-900 mb-2 line-clamp-2">{relatedProduct.name}</h3>
+                    <p className="text-lg font-bold text-blue-600">${relatedProduct.price}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
-      
-      <CartModal
-        isOpen={isCartOpen}
-        onClose={() => setIsCartOpen(false)}
-        items={cart?.items || []}
-        onUpdateQuantity={updateQuantity}
-        onRemoveItem={removeFromCart}
-      />
     </div>
   );
 };
