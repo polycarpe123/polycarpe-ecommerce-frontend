@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { productService, type Product } from '../services/productService';
+import { TabSkeleton } from './SkeletonLoader';
 
 interface TabProduct {
   id: number;
@@ -118,9 +119,12 @@ const ProductTabs: React.FC = () => {
     return (
       <div className="py-12 bg-gray-50">
         <div className="container mx-auto px-4 max-w-7xl">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-            <p className="mt-4 text-gray-600">Loading products...</p>
+          <div className="text-center mb-8">
+            <div className="h-8 bg-gray-200 rounded animate-pulse w-48 mx-auto mb-4"></div>
+            <div className="h-4 bg-gray-200 rounded animate-pulse w-64 mx-auto"></div>
+          </div>
+          <div className="space-y-4">
+            <TabSkeleton count={4} />
           </div>
         </div>
       </div>

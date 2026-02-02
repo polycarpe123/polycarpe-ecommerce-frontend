@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { productService, type Product } from '../services/productService';
 import { categoryService, type Category } from '../services/categoryService';
+import { ProductSkeleton } from './SkeletonLoader';
 
 interface FashionProduct {
   id: number;
@@ -77,11 +78,70 @@ const FashionShowcase: React.FC<FashionShowcaseProps> = ({
         image: product.images?.[0] || `https://picsum.photos/300/300?random=${product.id}`
       }));
       
-      setProducts(fashionProducts);
+      // If no products found for the category, use fallback data
+      if (fashionProducts.length === 0 && category) {
+        let fallbackProducts: FashionProduct[] = [];
+        
+        if (category === 'Men') {
+          fallbackProducts = [
+            { id: 1001, name: "Classic Denim Jacket", price: "$89.99", percentOff: 20, image: "https://picsum.photos/300/300?random=1001" },
+            { id: 1002, name: "Premium Cotton T-Shirt", price: "$29.99", image: "https://picsum.photos/300/300?random=1002" },
+            { id: 1003, name: "Slim Fit Chinos", price: "$59.99", percentOff: 15, image: "https://picsum.photos/300/300?random=1003" },
+            { id: 1004, name: "Leather Boots", price: "$129.99", image: "https://picsum.photos/300/300?random=1004" },
+            { id: 1005, name: "Wool Sweater", price: "$79.99", percentOff: 30, image: "https://picsum.photos/300/300?random=1005" },
+            { id: 1006, name: "Sports Jacket", price: "$149.99", image: "https://picsum.photos/300/300?random=1006" },
+          ];
+        } else if (category === 'Women') {
+          fallbackProducts = [
+            { id: 2001, name: "Floral Summer Dress", price: "$69.99", percentOff: 25, image: "https://picsum.photos/300/300?random=2001" },
+            { id: 2002, name: "Designer Handbag", price: "$199.99", image: "https://picsum.photos/300/300?random=2002" },
+            { id: 2003, name: "High-Waist Jeans", price: "$89.99", image: "https://picsum.photos/300/300?random=2003" },
+            { id: 2004, name: "Silk Blouse", price: "$79.99", percentOff: 40, image: "https://picsum.photos/300/300?random=2004" },
+            { id: 2005, name: "Ankle Boots", price: "$119.99", image: "https://picsum.photos/300/300?random=2005" },
+            { id: 2006, name: "Cashmere Scarf", price: "$49.99", percentOff: 20, image: "https://picsum.photos/300/300?random=2006" },
+          ];
+        }
+        
+        setProducts(fallbackProducts.length > 0 ? fallbackProducts : fashionProducts);
+      } else {
+        setProducts(fashionProducts);
+      }
     } catch (error) {
       console.error('Error loading fashion products:', error);
-      // Fallback to empty array or sample data
-      setProducts([]);
+      // Fallback to sample data based on category
+      let fallbackProducts: FashionProduct[] = [];
+      
+      if (category === 'Men') {
+        fallbackProducts = [
+          { id: 1001, name: "Classic Denim Jacket", price: "$89.99", percentOff: 20, image: "https://picsum.photos/300/300?random=1001" },
+          { id: 1002, name: "Premium Cotton T-Shirt", price: "$29.99", image: "https://picsum.photos/300/300?random=1002" },
+          { id: 1003, name: "Slim Fit Chinos", price: "$59.99", percentOff: 15, image: "https://picsum.photos/300/300?random=1003" },
+          { id: 1004, name: "Leather Boots", price: "$129.99", image: "https://picsum.photos/300/300?random=1004" },
+          { id: 1005, name: "Wool Sweater", price: "$79.99", percentOff: 30, image: "https://picsum.photos/300/300?random=1005" },
+          { id: 1006, name: "Sports Jacket", price: "$149.99", image: "https://picsum.photos/300/300?random=1006" },
+        ];
+      } else if (category === 'Women') {
+        fallbackProducts = [
+          { id: 2001, name: "Floral Summer Dress", price: "$69.99", percentOff: 25, image: "https://picsum.photos/300/300?random=2001" },
+          { id: 2002, name: "Designer Handbag", price: "$199.99", image: "https://picsum.photos/300/300?random=2002" },
+          { id: 2003, name: "High-Waist Jeans", price: "$89.99", image: "https://picsum.photos/300/300?random=2003" },
+          { id: 2004, name: "Silk Blouse", price: "$79.99", percentOff: 40, image: "https://picsum.photos/300/300?random=2004" },
+          { id: 2005, name: "Ankle Boots", price: "$119.99", image: "https://picsum.photos/300/300?random=2005" },
+          { id: 2006, name: "Cashmere Scarf", price: "$49.99", percentOff: 20, image: "https://picsum.photos/300/300?random=2006" },
+        ];
+      } else {
+        // General fallback products
+        fallbackProducts = [
+          { id: 3001, name: "Classic White Shirt", price: "$49.99", image: "https://picsum.photos/300/300?random=3001" },
+          { id: 3002, name: "Denim Jeans", price: "$79.99", percentOff: 10, image: "https://picsum.photos/300/300?random=3002" },
+          { id: 3003, name: "Leather Belt", price: "$39.99", image: "https://picsum.photos/300/300?random=3003" },
+          { id: 3004, name: "Sunglasses", price: "$89.99", image: "https://picsum.photos/300/300?random=3004" },
+          { id: 3005, name: "Canvas Sneakers", price: "$59.99", percentOff: 15, image: "https://picsum.photos/300/300?random=3005" },
+          { id: 3006, name: "Wool Coat", price: "$199.99", image: "https://picsum.photos/300/300?random=3006" },
+        ];
+      }
+      
+      setProducts(fallbackProducts);
     } finally {
       setLoading(false);
     }
@@ -95,9 +155,12 @@ const FashionShowcase: React.FC<FashionShowcaseProps> = ({
     return (
       <div className="py-12 bg-gray-50">
         <div className="container mx-auto px-4 max-w-7xl">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-            <p className="mt-4 text-gray-600">Loading fashion products...</p>
+          <div className="text-center mb-8">
+            <div className="h-8 bg-gray-200 rounded animate-pulse w-48 mx-auto mb-4"></div>
+            <div className="h-4 bg-gray-200 rounded animate-pulse w-64 mx-auto"></div>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <ProductSkeleton count={6} />
           </div>
         </div>
       </div>
@@ -229,9 +292,23 @@ const FashionSection: React.FC = () => {
     return (
       <div className="py-12 bg-gray-50">
         <div className="container mx-auto px-4 max-w-7xl">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-            <p className="text-gray-600">Loading fashion collection...</p>
+          <div className="text-center mb-8">
+            <div className="h-8 bg-gray-200 rounded animate-pulse w-64 mx-auto mb-4"></div>
+            <div className="h-4 bg-gray-200 rounded animate-pulse w-96 mx-auto"></div>
+          </div>
+          <div className="space-y-12">
+            <div>
+              <div className="h-6 bg-gray-200 rounded animate-pulse w-48 mb-6"></div>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <ProductSkeleton count={3} />
+              </div>
+            </div>
+            <div>
+              <div className="h-6 bg-gray-200 rounded animate-pulse w-32 mb-6"></div>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <ProductSkeleton count={3} />
+              </div>
+            </div>
           </div>
         </div>
       </div>

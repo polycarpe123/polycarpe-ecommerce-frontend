@@ -42,6 +42,7 @@ import AdminCustomers from './pages/admin/Dashboard/AdminCustomers';
 import AdminAnalytics from './pages/admin/Dashboard/AdminAnalytics';
 import AdminSettings from './pages/admin/Dashboard/AdminSettings';
 import AddProduct from './pages/admin/Dashboard/AddProduct';
+import AddCategory from './pages/admin/Dashboard/AddCategory';
 
 // Initialize sample data
 initializeSampleData();
@@ -156,6 +157,7 @@ function App() {
                     <Route path="products" element={<ProductsDashboard />} />
                     <Route path="products/new" element={<AddProduct />} />
                     <Route path="categories" element={<CategoriesDashboard />} />
+                    <Route path="categories/new" element={<AddCategory />} />
                     <Route path="category-manager" element={<AdminCategoryManager />} />
                     <Route path="orders" element={<OrdersDashboard />} />
                     <Route path="dashboard" element={<AdminDashboard />} />

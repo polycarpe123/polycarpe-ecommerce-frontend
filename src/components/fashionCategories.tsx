@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { categoryService, type Category } from '../services/categoryService';
 import { productService, type Product } from '../services/productService';
+import { FashionCardSkeleton } from './SkeletonLoader';
 
 interface Banner {
   image: string;
@@ -71,9 +72,26 @@ const FashionCategories: React.FC = () => {
     return (
       <div className="py-12 bg-gray-50">
         <div className="container mx-auto px-4 max-w-7xl">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-600 mx-auto mb-4"></div>
-            <p className="text-gray-600">Loading fashion collection...</p>
+          <div className="h-1 bg-gradient-to-r from-transparent via-orange-400 to-transparent mb-12 shadow-md"></div>
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            <div className="lg:col-span-3 lg:pr-4">
+              <div className="h-8 bg-gray-200 rounded animate-pulse w-24 mb-4"></div>
+              <div className="space-y-2">
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <div key={i} className="h-8 bg-gray-200 rounded animate-pulse"></div>
+                ))}
+              </div>
+            </div>
+            <div className="lg:col-span-4 lg:mx-4">
+              <div className="relative group cursor-pointer overflow-hidden rounded-2xl shadow-lg">
+                <div className="w-full h-[500px] bg-gray-200 animate-pulse"></div>
+              </div>
+            </div>
+            <div className="lg:col-span-5">
+              <div className="grid grid-cols-2 gap-4">
+                <FashionCardSkeleton count={4} />
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -93,7 +111,7 @@ const FashionCategories: React.FC = () => {
           
           {/* Column 1: Title and Menu */}
           <div className="flex flex-col lg:col-span-3 lg:pr-4">
-            <h2 className="text-3xl font-bold text-orange-600 mb-4">Fashion</h2>
+            <h2 className="text-3xl font-bold text-orange-600 mb-4">Fashion Categories</h2>
             <nav className="flex flex-col space-y-1">
               {Array.isArray(categories) && categories.length > 0 ? (
                 categories.map((category) => (
