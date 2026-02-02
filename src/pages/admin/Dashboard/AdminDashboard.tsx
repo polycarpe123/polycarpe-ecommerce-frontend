@@ -1,23 +1,16 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
 import { 
-  Home, 
-  ShoppingBag, 
-  Package, 
-  Users, 
-  Settings, 
   DollarSign,
   ShoppingCart,
-  Bell,
-  Search,
-  Menu,
-  X,
-  ChevronRight,
-  BarChart3,
+  Package,
+  Users,
   ArrowUp,
   ArrowDown
 } from 'lucide-react';
-import { useApp } from '../../../contexts/AppContext';
+import { productService } from '../../../services/productService';
+import { orderService } from '../../../services/orderService';
+import { customerService } from '../../../services/customerService';
+import RevenueChart from '../../../components/admin/RevenueChart';
 
 interface StatCard {
   title: string;
@@ -28,261 +21,322 @@ interface StatCard {
 }
 
 const AdminDashboard: React.FC = () => {
-  const { user, isAuthenticated } = useApp();
-  const navigate = useNavigate();
-  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [stats, setStats] = useState<StatCard[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [recentOrders, setRecentOrders] = useState<any[]>([]);
+  const [topProducts, setTopProducts] = useState<any[]>([]);
+  const [revenueData, setRevenueData] = useState<any[]>([]);
 
-  // Check if user is admin
+  // Fetch real dashboard data
   useEffect(() => {
-    if (!isAuthenticated || user?.role !== 'admin') {
-      navigate('/');
-    }
-  }, [isAuthenticated, user, navigate]);
+    const fetchDashboardData = async () => {
+      try {
+        setLoading(true);
+        
+        // Fetch all data in parallel
+        const [productsResponse, ordersResponse, customersResponse] = await Promise.all([
+          productService.getProducts({ limit: 1000 }),
+          orderService.getAllOrders({ limit: 1000 }),
+          customerService.getCustomers({ limit: 1000 })
+        ]);
 
-  // Mock stats data
-  useEffect(() => {
-    setStats([
-      {
-        title: 'Total Revenue',
-        value: '$45,231',
-        change: 12.5,
-        icon: <DollarSign className="w-6 h-6" />,
-        color: 'bg-blue-500'
-      },
-      {
-        title: 'Total Orders',
-        value: '1,234',
-        change: 8.2,
-        icon: <ShoppingCart className="w-6 h-6" />,
-        color: 'bg-green-500'
-      },
-      {
-        title: 'Total Products',
-        value: '567',
-        change: -2.4,
-        icon: <Package className="w-6 h-6" />,
-        color: 'bg-purple-500'
-      },
-      {
-        title: 'Total Customers',
-        value: '8,912',
-        change: 15.3,
-        icon: <Users className="w-6 h-6" />,
-        color: 'bg-orange-500'
+        const products = productsResponse.products || [];
+        const orders = ordersResponse.orders || [];
+        const customers = customersResponse.customers || [];
+
+        // Calculate total revenue from orders
+        const totalRevenue = orders.reduce((sum: number, order: any) => {
+          return sum + (order.totalAmount || order.total || 0);
+        }, 0);
+
+        // Process revenue data for chart (last 7 days)
+        const revenueData = processRevenueData(orders);
+        setRevenueData(revenueData);
+
+        // Get recent orders (last 5)
+        const sortedOrders = orders
+          .sort((a: any, b: any) => new Date(b.createdAt || b.date).getTime() - new Date(a.createdAt || a.date).getTime())
+          .slice(0, 5);
+
+        // Get top products (by sales or views)
+        const topProductsData = products
+          .sort((a: any, b: any) => (b.sales || 0) - (a.sales || 0))
+          .slice(0, 5);
+
+        // Calculate stats
+        const newStats: StatCard[] = [
+          {
+            title: 'Total Revenue',
+            value: `$${totalRevenue.toLocaleString()}`,
+            change: 12.5, // You could calculate this from historical data
+            icon: <DollarSign className="w-6 h-6" />,
+            color: 'bg-blue-500'
+          },
+          {
+            title: 'Total Orders',
+            value: orders.length.toLocaleString(),
+            change: 8.2, // You could calculate this from historical data
+            icon: <ShoppingCart className="w-6 h-6" />,
+            color: 'bg-green-500'
+          },
+          {
+            title: 'Total Products',
+            value: products.length.toLocaleString(),
+            change: -2.4, // You could calculate this from historical data
+            icon: <Package className="w-6 h-6" />,
+            color: 'bg-purple-500'
+          },
+          {
+            title: 'Total Customers',
+            value: customers.length.toLocaleString(),
+            change: 15.3, // You could calculate this from historical data
+            icon: <Users className="w-6 h-6" />,
+            color: 'bg-orange-500'
+          }
+        ];
+
+        setStats(newStats);
+        setRecentOrders(sortedOrders);
+        setTopProducts(topProductsData);
+      } catch (error) {
+        console.error('Error fetching dashboard data:', error);
+        // Set empty arrays for real data only
+        setStats([]);
+        setRecentOrders([]);
+        setTopProducts([]);
+        setRevenueData([]);
+      } finally {
+        setLoading(false);
       }
-    ]);
+    };
+
+    fetchDashboardData();
   }, []);
 
-  const menuItems = [
-    { icon: <Home className="w-5 h-5" />, label: 'Dashboard', path: '/admin/dashboard' },
-    { icon: <ShoppingBag className="w-5 h-5" />, label: 'Products', path: '/admin/products' },
-    { icon: <ShoppingCart className="w-5 h-5" />, label: 'Orders', path: '/admin/orders' },
-    { icon: <Users className="w-5 h-5" />, label: 'Customers', path: '/admin/customers' },
-    { icon: <BarChart3 className="w-5 h-5" />, label: 'Analytics', path: '/admin/analytics' },
-    { icon: <Settings className="w-5 h-5" />, label: 'Settings', path: '/admin/settings' },
-  ];
-
-  if (!isAuthenticated || user?.role !== 'admin') {
-    return <div>Loading...</div>;
-  }
+  const processRevenueData = (orders: any[]) => {
+    const last7Days = [];
+    const today = new Date();
+    
+    for (let i = 6; i >= 0; i--) {
+      const date = new Date(today);
+      date.setDate(date.getDate() - i);
+      const dateStr = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+      
+      const dayRevenue = orders
+        .filter(order => {
+          const orderDate = new Date(order.createdAt || order.date);
+          return orderDate.toDateString() === date.toDateString();
+        })
+        .reduce((sum, order) => sum + (order.totalAmount || order.total || 0), 0);
+      
+      last7Days.push({ date: dateStr, revenue: dayRevenue });
+    }
+    
+    return last7Days;
+  };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex">
-      {/* Sidebar */}
-      <div className={`fixed inset-y-0 left-0 z-50 w-64 bg-gray-900 transform ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0 transition-transform duration-300 ease-in-out`}>
-        <div className="flex items-center justify-between h-16 px-6 bg-gray-800">
-          <h1 className="text-xl font-bold text-white">Kapee Admin</h1>
-          <button 
-            onClick={() => setSidebarOpen(false)}
-            className="lg:hidden text-white hover:text-gray-300"
-          >
-            <X className="w-5 h-5" />
-          </button>
-        </div>
-        
-        <nav className="mt-8">
-          {menuItems.map((item, index) => (
-            <Link
-              key={index}
-              to={item.path}
-              className="flex items-center px-6 py-3 text-gray-300 hover:bg-gray-800 hover:text-white transition-colors"
-            >
-              {item.icon}
-              <span className="ml-3">{item.label}</span>
-              <ChevronRight className="w-4 h-4 ml-auto" />
-            </Link>
-          ))}
-        </nav>
+    <div className="space-y-6">
+      {/* Page Title */}
+      <div>
+        <h2 className="text-2xl font-bold text-gray-900">Dashboard</h2>
+        <p className="text-gray-600">Welcome back! Here's what's happening with your store today.</p>
       </div>
 
-      {/* Main Content */}
-      <div className="flex-1 lg:ml-64">
-        {/* Top Navigation */}
-        <header className="bg-white shadow-sm border-b border-gray-200">
-          <div className="flex items-center justify-between h-16 px-6">
-            <div className="flex items-center">
-              <button 
-                onClick={() => setSidebarOpen(true)}
-                className="lg:hidden text-gray-600 hover:text-gray-900"
-              >
-                <Menu className="w-6 h-6" />
-              </button>
-              
-              {/* Search Bar */}
-              <div className="relative ml-4">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-                <input
-                  type="text"
-                  placeholder="Search..."
-                  className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent w-64"
-                />
-              </div>
-            </div>
-
-            <div className="flex items-center space-x-4">
-              {/* Notifications */}
-              <button className="relative text-gray-600 hover:text-gray-900">
-                <Bell className="w-6 h-6" />
-              </button>
-
-              {/* Back to Store */}
-              <Link 
-                to="/"
-                className="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 text-sm font-medium"
-              >
-                Back to Store
-              </Link>
-
-              {/* User Profile */}
-              <div className="flex items-center">
-                <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white font-semibold">
-                  {user?.firstName?.[0] || 'A'}
-                </div>
-                <div className="ml-3">
-                  <p className="text-sm font-medium text-gray-900">{user?.firstName} {user?.lastName}</p>
-                  <p className="text-xs text-gray-500">Administrator</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </header>
-
-        {/* Dashboard Content */}
-        <main className="p-6">
-          {/* Page Title */}
-          <div className="mb-6">
-            <h2 className="text-2xl font-bold text-gray-900">Dashboard</h2>
-            <p className="text-gray-600">Welcome back! Here's what's happening with your store today.</p>
-          </div>
-
-          {/* Stats Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-            {stats.map((stat, index) => (
-              <div key={index} className="bg-white rounded-lg shadow p-6">
+      {/* Stats Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        {loading ? (
+          // Loading skeleton for stats cards
+          Array.from({ length: 4 }).map((_, index) => (
+            <div key={index} className="bg-white rounded-lg shadow p-6">
+              <div className="animate-pulse">
                 <div className="flex items-center">
-                  <div className={`${stat.color} p-3 rounded-lg text-white`}>
-                    {stat.icon}
-                  </div>
-                  <div className="ml-4">
-                    <p className="text-sm font-medium text-gray-600">{stat.title}</p>
-                    <p className="text-2xl font-bold text-gray-900">{stat.value}</p>
+                  <div className="bg-gray-300 p-3 rounded-lg w-12 h-12"></div>
+                  <div className="ml-4 flex-1">
+                    <div className="h-4 bg-gray-300 rounded mb-2 w-24"></div>
+                    <div className="h-6 bg-gray-300 rounded w-16"></div>
                   </div>
                 </div>
                 <div className="mt-4 flex items-center">
-                  {stat.change > 0 ? (
-                    <ArrowUp className="w-4 h-4 text-green-500 mr-1" />
-                  ) : (
-                    <ArrowDown className="w-4 h-4 text-red-500 mr-1" />
-                  )}
-                  <span className={`text-sm font-medium ${stat.change > 0 ? 'text-green-500' : 'text-red-500'}`}>
-                    {Math.abs(stat.change)}%
-                  </span>
-                  <span className="text-sm text-gray-500 ml-1">from last month</span>
+                  <div className="h-4 bg-gray-300 rounded w-8"></div>
+                  <div className="h-4 bg-gray-300 rounded w-12 ml-2"></div>
+                  <div className="h-4 bg-gray-300 rounded w-20 ml-1"></div>
                 </div>
               </div>
-            ))}
-          </div>
-
-          {/* Charts Section */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-            {/* Revenue Chart */}
-            <div className="bg-white rounded-lg shadow p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Revenue Overview</h3>
-              <div className="h-64 bg-gray-100 rounded-lg flex items-center justify-center">
-                <p className="text-gray-500">Revenue Chart Placeholder</p>
+            </div>
+          ))
+        ) : (
+          stats.map((stat, index) => (
+            <div key={index} className="bg-white rounded-lg shadow p-6">
+              <div className="flex items-center">
+                <div className={`${stat.color} p-3 rounded-lg text-white`}>
+                  {stat.icon}
+                </div>
+                <div className="ml-4">
+                  <p className="text-sm font-medium text-gray-600">{stat.title}</p>
+                  <p className="text-2xl font-bold text-gray-900">{stat.value}</p>
+                </div>
+              </div>
+              <div className="mt-4 flex items-center">
+                {stat.change > 0 ? (
+                  <ArrowUp className="w-4 h-4 text-green-500 mr-1" />
+                ) : (
+                  <ArrowDown className="w-4 h-4 text-red-500 mr-1" />
+                )}
+                <span className={`text-sm font-medium ${stat.change > 0 ? 'text-green-500' : 'text-red-500'}`}>
+                  {Math.abs(stat.change)}%
+                </span>
+                <span className="text-sm text-gray-500 ml-1">from last month</span>
               </div>
             </div>
-
-            {/* Recent Orders */}
-            <div className="bg-white rounded-lg shadow p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Recent Orders</h3>
-              <div className="space-y-4">
-                {[1, 2, 3, 4].map((order) => (
-                  <div key={order} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                    <div>
-                      <p className="font-medium text-gray-900">Order #{1000 + order}</p>
-                      <p className="text-sm text-gray-500">2 hours ago</p>
-                    </div>
-                    <div className="text-right">
-                      <p className="font-medium text-gray-900">${((order || 0) * 45.99).toFixed(2)}</p>
-                      <p className="text-sm text-green-600">Completed</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          {/* Top Products */}
-          <div className="bg-white rounded-lg shadow p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Top Products</h3>
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead>
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Product</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Price</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Sales</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Revenue</th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {['Backpack', 'Sweater', 'Shoes', 'Jacket'].map((product, index) => (
-                    <tr key={index}>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center space-x-4">
-                          <button className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">
-                            Export Orders
-                          </button>
-                        </div>
-                        <div className="flex items-center">
-                          <div className="w-10 h-10 bg-gray-200 rounded-lg mr-3"></div>
-                          <div>
-                            <p className="font-medium text-gray-900">{product}</p>
-                            <p className="text-sm text-gray-500">Category {index + 1}</p>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-gray-900">${(index + 1) * 15.99}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-gray-900">{Math.floor(Math.random() * 100) + 20}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-gray-900">${((Math.floor(Math.random() * 1000) + 500) || 0).toFixed(2)}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </main>
+          ))
+        )}
       </div>
 
-      {/* Mobile sidebar overlay */}
-      {sidebarOpen && (
-        <div 
-          className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
-          onClick={() => setSidebarOpen(false)}
-        />
-      )}
+      {/* Charts Section */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Revenue Chart */}
+        <div className="bg-white rounded-lg shadow p-6">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">Revenue Overview (Last 7 Days)</h3>
+          {loading ? (
+            <div className="h-64 bg-gray-100 rounded-lg flex items-center justify-center">
+              <div className="animate-pulse text-gray-500">Loading revenue data...</div>
+            </div>
+          ) : (
+            <RevenueChart data={revenueData} />
+          )}
+        </div>
+
+        {/* Recent Orders */}
+        <div className="bg-white rounded-lg shadow p-6">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">Recent Orders</h3>
+          <div className="space-y-4">
+            {loading ? (
+              // Loading skeleton for recent orders
+              Array.from({ length: 4 }).map((_, index) => (
+                <div key={index} className="animate-pulse">
+                  <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                    <div>
+                      <div className="h-4 bg-gray-300 rounded mb-2 w-24"></div>
+                      <div className="h-3 bg-gray-300 rounded w-20"></div>
+                    </div>
+                    <div className="text-right">
+                      <div className="h-4 bg-gray-300 rounded mb-2 w-16"></div>
+                      <div className="h-3 bg-gray-300 rounded w-12"></div>
+                    </div>
+                  </div>
+                </div>
+              ))
+            ) : recentOrders.length > 0 ? (
+              recentOrders.map((order: any, index) => (
+                <div key={order.id || index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                  <div>
+                    <p className="font-medium text-gray-900">Order #{order.id || order.orderNumber}</p>
+                    <p className="text-sm text-gray-500">
+                      {new Date(order.createdAt || order.date).toLocaleDateString()}
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <p className="font-medium text-gray-900">
+                      ${(order.totalAmount || order.total || 0).toFixed(2)}
+                    </p>
+                    <p className={`text-sm ${
+                      order.status === 'completed' ? 'text-green-600' : 
+                      order.status === 'pending' ? 'text-yellow-600' : 
+                      order.status === 'cancelled' ? 'text-red-600' : 'text-gray-600'
+                    }`}>
+                      {order.status || 'Processing'}
+                    </p>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <p className="text-gray-500 text-center py-4">No recent orders found</p>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Top Products */}
+      <div className="bg-white rounded-lg shadow p-6">
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">Top Products</h3>
+        <div className="overflow-x-auto">
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead>
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Product</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Price</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Sales</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Revenue</th>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {loading ? (
+                // Loading skeleton for top products
+                Array.from({ length: 4 }).map((_, index) => (
+                  <tr key={index}>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex items-center">
+                        <div className="w-10 h-10 bg-gray-300 rounded-lg mr-3 animate-pulse"></div>
+                        <div>
+                          <div className="h-4 bg-gray-300 rounded mb-2 w-24"></div>
+                          <div className="h-3 bg-gray-300 rounded w-16"></div>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="h-4 bg-gray-300 rounded w-16 animate-pulse"></div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="h-4 bg-gray-300 rounded w-12 animate-pulse"></div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="h-4 bg-gray-300 rounded w-20 animate-pulse"></div>
+                    </td>
+                  </tr>
+                ))
+              ) : topProducts.length > 0 ? (
+                topProducts.map((product: any, index) => (
+                  <tr key={product.id || index}>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex items-center">
+                        {product.images && product.images.length > 0 ? (
+                          <img 
+                            src={product.images[0]} 
+                            alt={product.name}
+                            className="w-10 h-10 object-cover rounded-lg mr-3"
+                          />
+                        ) : (
+                          <div className="w-10 h-10 bg-gray-200 rounded-lg mr-3"></div>
+                        )}
+                        <div>
+                          <p className="font-medium text-gray-900">{product.name}</p>
+                          <p className="text-sm text-gray-500">{product.category || 'Uncategorized'}</p>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-gray-900">
+                      ${(product.price || 0).toFixed(2)}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-gray-900">
+                      {product.sales || 0}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-gray-900">
+                      ${((product.price || 0) * (product.sales || 0)).toFixed(2)}
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan={4} className="px-6 py-4 text-center text-gray-500">
+                    No products found
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
     </div>
   );
 };

@@ -40,14 +40,14 @@ const AdminLayout: React.FC = () => {
   return (
     <div className="min-h-screen bg-gray-100 flex">
       {/* Sidebar */}
-      <div className={`fixed inset-y-0 left-0 z-50 w-64 bg-gray-900 transform transition-transform duration-300 ease-in-out ${
+      <div className={`fixed inset-y-0 left-0 z-50 w-64 bg-gray-900 transform transition-transform duration-300 ease-in-out overflow-hidden ${
         sidebarOpen ? 'translate-x-0' : '-translate-x-full'
       } lg:translate-x-0 lg:static lg:inset-0`}>
-        <div className="flex items-center justify-center h-16 bg-gray-800">
+        <div className="flex items-center justify-center h-16 bg-gray-800 flex-shrink-0">
           <h1 className="text-white text-xl font-bold">Admin Panel</h1>
         </div>
         
-        <nav className="mt-8">
+        <nav className="mt-8 h-[calc(100vh-4rem)] overflow-y-auto">
           <div className="px-4 space-y-2">
             {menuItems.map((item) => (
               <Link
@@ -64,7 +64,7 @@ const AdminLayout: React.FC = () => {
           </div>
         </nav>
 
-        <div className="absolute bottom-0 w-full p-4">
+        <div className="absolute bottom-0 w-full p-4 bg-gray-900">
           <Link
             to="/"
             className="flex items-center space-x-3 text-gray-300 p-3 rounded-lg hover:bg-gray-700 hover:text-white transition-colors"

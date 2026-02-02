@@ -18,7 +18,7 @@ import { AuthProvider } from './contexts/AuthContext';
 import ErrorBoundary from './components/ErrorBoundary';
 import { initializeSampleData } from './data/sampleData';
 
-import HeroSection from './components/HeroSection';
+import HeroBanner from './components/HeroSection';
 import ProductCategories from './components/ProductCategories';
 import FeaturedProducts from './components/FeaturedProducts';
 import FashionSection from './components/FashionSection';
@@ -43,6 +43,7 @@ import AdminAnalytics from './pages/admin/Dashboard/AdminAnalytics';
 import AdminSettings from './pages/admin/Dashboard/AdminSettings';
 import AddProduct from './pages/admin/Dashboard/AddProduct';
 import AddCategory from './pages/admin/Dashboard/AddCategory';
+import EditProduct from './pages/admin/Dashboard/EditProduct';
 
 // Initialize sample data
 initializeSampleData();
@@ -61,7 +62,7 @@ const MainLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => (
 // Home page with all components
 const HomePage: React.FC = () => (
   <>
-    <HeroSection />
+    <HeroBanner />
     <ProductCategories />
     <FeaturedProducts />
     <FashionSection />
@@ -156,6 +157,7 @@ function App() {
                   <Route path="/admin" element={<AdminLayout />}>
                     <Route path="products" element={<ProductsDashboard />} />
                     <Route path="products/new" element={<AddProduct />} />
+                    <Route path="products/:id/edit" element={<EditProduct />} />
                     <Route path="categories" element={<CategoriesDashboard />} />
                     <Route path="categories/new" element={<AddCategory />} />
                     <Route path="category-manager" element={<AdminCategoryManager />} />

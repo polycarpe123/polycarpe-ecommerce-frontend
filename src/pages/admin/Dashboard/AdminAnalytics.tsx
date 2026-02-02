@@ -1,96 +1,209 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { 
-  Menu,
-  X,
-  ChevronRight,
-  Package,
-  ShoppingCart,
-  Users,
-  TrendingUp,
-  Settings
-} from 'lucide-react';
 import { useApp } from '../../../contexts/AppContext';
+import { orderService } from '../../../services/orderService';
+import { customerService } from '../../../services/customerService';
+import { productService } from '../../../services/productService';
+import RevenueChart from '../../../components/admin/RevenueChart';
+import SalesChart from '../../../components/admin/SalesChart';
+import CustomerChart from '../../../components/admin/CustomerChart';
+import ProductChart from '../../../components/admin/ProductChart';
 
 const AdminAnalytics: React.FC = () => {
   const { user, isAuthenticated } = useApp();
-  const navigate = useNavigate();
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [revenueData, setRevenueData] = useState<any[]>([]);
+  const [salesData, setSalesData] = useState<any[]>([]);
+  const [customerData, setCustomerData] = useState<any[]>([]);
+  const [productData, setProductData] = useState<any[]>([]);
 
   useEffect(() => {
-    if (!isAuthenticated || user?.role !== 'admin') {
-      navigate('/');
-    }
-  }, [isAuthenticated, user, navigate]);
+    const fetchAnalyticsData = async () => {
+      try {
+        setLoading(true);
+        
+        // Fetch all data in parallel
+        const [ordersResponse, customersResponse, productsResponse] = await Promise.all([
+          orderService.getAllOrders({ limit: 1000 }),
+          customerService.getCustomers({ limit: 1000 }),
+          productService.getProducts({ limit: 1000 })
+        ]);
 
-  const menuItems = [
-    { icon: <Package className="w-5 h-5" />, label: 'Dashboard', path: '/admin/dashboard' },
-    { icon: <Package className="w-5 h-5" />, label: 'Products', path: '/admin/products' },
-    { icon: <ShoppingCart className="w-5 h-5" />, label: 'Orders', path: '/admin/orders' },
-    { icon: <Users className="w-5 h-5" />, label: 'Customers', path: '/admin/customers' },
-    { icon: <TrendingUp className="w-5 h-5" />, label: 'Analytics', path: '/admin/analytics' },
-    { icon: <Settings className="w-5 h-5" />, label: 'Settings', path: '/admin/settings' },
-  ];
+        const orders = ordersResponse.orders || [];
+        const customers = customersResponse.customers || [];
+        const products = productsResponse.products || [];
+
+        // Process revenue data (last 7 days)
+        const revenueData = processRevenueData(orders);
+        setRevenueData(revenueData);
+
+        // Process sales data (monthly)
+        const salesData = processSalesData(orders);
+        setSalesData(salesData);
+
+        // Process customer data (by segment)
+        const customerData = processCustomerData(customers);
+        setCustomerData(customerData);
+
+        // Process product data (top performing)
+        const productData = processProductData(products);
+        setProductData(productData);
+
+      } catch (error) {
+        console.error('Error fetching analytics data:', error);
+        // Set empty arrays for real data only
+        setRevenueData([]);
+        setSalesData([]);
+        setCustomerData([]);
+        setProductData([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (isAuthenticated && user?.role === 'admin') {
+      fetchAnalyticsData();
+    }
+  }, [isAuthenticated, user]);
+
+  const processRevenueData = (orders: any[]) => {
+    const last7Days = [];
+    const today = new Date();
+    
+    for (let i = 6; i >= 0; i--) {
+      const date = new Date(today);
+      date.setDate(date.getDate() - i);
+      const dateStr = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+      
+      const dayRevenue = orders
+        .filter(order => {
+          const orderDate = new Date(order.createdAt || order.date);
+          return orderDate.toDateString() === date.toDateString();
+        })
+        .reduce((sum, order) => sum + (order.totalAmount || order.total || 0), 0);
+      
+      last7Days.push({ date: dateStr, revenue: dayRevenue });
+    }
+    
+    return last7Days;
+  };
+
+  const processSalesData = (orders: any[]) => {
+    const monthlyData: { [key: string]: number } = {};
+    
+    orders.forEach(order => {
+      const date = new Date(order.createdAt || order.date);
+      const monthKey = date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+      
+      if (!monthlyData[monthKey]) {
+        monthlyData[monthKey] = 0;
+      }
+      monthlyData[monthKey]++;
+    });
+    
+    return Object.entries(monthlyData)
+      .map(([month, sales]) => ({ month, sales }))
+      .slice(-6); // Last 6 months
+  };
+
+  const processCustomerData = (customers: any[]) => {
+    const segments = {
+      'New': 0,
+      'Active': 0,
+      'Inactive': 0,
+      'VIP': 0
+    };
+
+    customers.forEach(customer => {
+      const ordersCount = customer.totalOrders || 0;
+      const lastOrderDate = customer.lastOrderDate ? new Date(customer.lastOrderDate) : null;
+      const daysSinceLastOrder = lastOrderDate ? Math.floor((new Date().getTime() - lastOrderDate.getTime()) / (1000 * 60 * 60 * 24)) : Infinity;
+
+      if (ordersCount >= 10) {
+        segments['VIP']++;
+      } else if (daysSinceLastOrder <= 30 && ordersCount > 0) {
+        segments['Active']++;
+      } else if (daysSinceLastOrder > 90 && ordersCount > 0) {
+        segments['Inactive']++;
+      } else {
+        segments['New']++;
+      }
+    });
+
+    return Object.entries(segments).map(([name, value]) => ({ name, value }));
+  };
+
+  const processProductData = (products: any[]) => {
+    return products
+      .sort((a, b) => (b.sales || 0) - (a.sales || 0))
+      .slice(0, 5)
+      .map(product => ({
+        name: product.name.length > 15 ? product.name.substring(0, 15) + '...' : product.name,
+        revenue: (product.price || 0) * (product.sales || 0)
+      }));
+  };
 
   if (!isAuthenticated || user?.role !== 'admin') {
     return <div>Loading...</div>;
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex">
-      <div className={`fixed inset-y-0 left-0 z-50 w-64 bg-gray-900 transform ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0 transition-transform duration-300 ease-in-out`}>
-        <div className="flex items-center justify-between h-16 px-6 bg-gray-800">
-          <h1 className="text-xl font-bold text-white">Kapee Admin</h1>
-          <button onClick={() => setSidebarOpen(false)} className="lg:hidden text-white hover:text-gray-300">
-            <X className="w-5 h-5" />
-          </button>
+    <div className="space-y-6">
+      {/* Header */}
+      <div>
+        <h2 className="text-2xl font-bold text-gray-900">Analytics</h2>
+        <p className="text-gray-600">View your store analytics and insights</p>
+      </div>
+
+      {/* Analytics Content */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Revenue Chart */}
+        <div className="bg-white rounded-lg shadow p-6">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">Revenue Overview (Last 7 Days)</h3>
+          {loading ? (
+            <div className="h-64 bg-gray-100 rounded-lg flex items-center justify-center">
+              <div className="animate-pulse text-gray-500">Loading revenue data...</div>
+            </div>
+          ) : (
+            <RevenueChart data={revenueData} />
+          )}
         </div>
-        
-        <nav className="mt-8">
-          {menuItems.map((item, index) => (
-            <Link key={index} to={item.path} className="flex items-center px-6 py-3 text-gray-300 hover:bg-gray-800 hover:text-white transition-colors">
-              {item.icon}
-              <span className="ml-3">{item.label}</span>
-              <ChevronRight className="w-4 h-4 ml-auto" />
-            </Link>
-          ))}
-        </nav>
+
+        {/* Sales Chart */}
+        <div className="bg-white rounded-lg shadow p-6">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">Sales Analytics (Monthly)</h3>
+          {loading ? (
+            <div className="h-64 bg-gray-100 rounded-lg flex items-center justify-center">
+              <div className="animate-pulse text-gray-500">Loading sales data...</div>
+            </div>
+          ) : (
+            <SalesChart data={salesData} />
+          )}
+        </div>
+
+        {/* Customer Analytics */}
+        <div className="bg-white rounded-lg shadow p-6">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">Customer Segments</h3>
+          {loading ? (
+            <div className="h-64 bg-gray-100 rounded-lg flex items-center justify-center">
+              <div className="animate-pulse text-gray-500">Loading customer data...</div>
+            </div>
+          ) : (
+            <CustomerChart data={customerData} />
+          )}
+        </div>
+
+        {/* Product Analytics */}
+        <div className="bg-white rounded-lg shadow p-6">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">Top Products by Revenue</h3>
+          {loading ? (
+            <div className="h-64 bg-gray-100 rounded-lg flex items-center justify-center">
+              <div className="animate-pulse text-gray-500">Loading product data...</div>
+            </div>
+          ) : (
+            <ProductChart data={productData} />
+          )}
+        </div>
       </div>
-
-      <div className="flex-1 lg:ml-64">
-        <header className="bg-white shadow-sm border-b border-gray-200">
-          <div className="flex items-center justify-between h-16 px-6">
-            <div className="flex items-center">
-              <button onClick={() => setSidebarOpen(true)} className="lg:hidden text-gray-600 hover:text-gray-900">
-                <Menu className="w-6 h-6" />
-              </button>
-              <h2 className="text-xl font-semibold text-gray-900 ml-4">Analytics</h2>
-            </div>
-          </div>
-        </header>
-
-        <main className="p-6">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <div className="bg-white rounded-lg shadow p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Revenue Overview</h3>
-              <div className="h-64 bg-gray-100 rounded-lg flex items-center justify-center">
-                <p className="text-gray-500">Revenue Chart Placeholder</p>
-              </div>
-            </div>
-
-            <div className="bg-white rounded-lg shadow p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Sales Trends</h3>
-              <div className="h-64 bg-gray-100 rounded-lg flex items-center justify-center">
-                <p className="text-gray-500">Sales Chart Placeholder</p>
-              </div>
-            </div>
-          </div>
-        </main>
-      </div>
-
-      {sidebarOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden" onClick={() => setSidebarOpen(false)} />
-      )}
     </div>
   );
 };
