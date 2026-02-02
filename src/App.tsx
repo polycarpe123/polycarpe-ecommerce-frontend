@@ -22,7 +22,7 @@ import HeroSection from './components/HeroSection';
 import ProductCategories from './components/ProductCategories';
 import FeaturedProducts from './components/FeaturedProducts';
 import FashionSection from './components/FashionSection';
-import FashionCategories from './components/fashionCategories';
+import FashionCategories from './components/FashionCategories';
 import ProductTabs from './components/ProductTabs';
 import Footer from './components/layout/footer';
 import ProductDetail from './pages/ProductDetail';
