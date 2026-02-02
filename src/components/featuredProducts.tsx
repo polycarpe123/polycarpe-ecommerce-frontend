@@ -34,7 +34,7 @@ const FeaturedProducts: React.FC = () => {
         category: product.category || 'Uncategorized',
         price: `$${product.price}`,
         oldPrice: product.oldPrice ? `$${product.oldPrice}` : undefined,
-        image: product.images?.[0] || '',
+        image: product.images?.[0] || `https://picsum.photos/300/300?random=${product.id}`,
         rating: product.rating || 0,
         reviews: product.reviews || 0,
         featured: product.featured || false

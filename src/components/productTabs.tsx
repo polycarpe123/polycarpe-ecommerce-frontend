@@ -38,7 +38,7 @@ const ProductTabs: React.FC = () => {
         name: product.name,
         price: `$${product.price}`,
         oldPrice: product.oldPrice ? `$${product.oldPrice}` : undefined,
-        image: product.images?.[0] || '',
+        image: product.images?.[0] || `https://picsum.photos/300/300?random=${product.id}`,
         rating: product.rating || 0,
         category: product.category
       }));
@@ -50,7 +50,7 @@ const ProductTabs: React.FC = () => {
         name: product.name,
         price: `$${product.price}`,
         oldPrice: product.oldPrice ? `$${product.oldPrice}` : undefined,
-        image: product.images?.[0] || '',
+        image: product.images?.[0] || `https://picsum.photos/300/300?random=${product.id}`,
         rating: product.rating || 0,
         category: product.category
       }));
@@ -64,7 +64,7 @@ const ProductTabs: React.FC = () => {
           name: product.name,
           price: `$${product.price}`,
           oldPrice: product.oldPrice ? `$${product.oldPrice}` : undefined,
-          image: product.images?.[0] || '',
+          image: product.images?.[0] || `https://picsum.photos/300/300?random=${product.id}`,
           rating: product.rating || 0,
           category: product.category
         }));
@@ -78,7 +78,7 @@ const ProductTabs: React.FC = () => {
           name: product.name,
           price: `$${product.price}`,
           oldPrice: product.oldPrice ? `$${product.oldPrice}` : undefined,
-          image: product.images?.[0] || '',
+          image: product.images?.[0] || `https://picsum.photos/300/300?random=${product.id}`,
           rating: product.rating || 0,
           category: product.category
         }));
