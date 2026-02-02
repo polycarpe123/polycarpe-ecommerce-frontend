@@ -32,7 +32,7 @@ const slides: HeroSlide[] = [
 ];
 
 
-const HeroBanner: React.FC = () => {
+const HeroSection: React.FC = () => {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isAnimating, setIsAnimating] = useState(true);
 
@@ -136,4 +136,4 @@ const HeroBanner: React.FC = () => {
   );
 };
 
-export default HeroBanner;
+export default HeroSection;

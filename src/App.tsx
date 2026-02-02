@@ -18,11 +18,11 @@ import { AuthProvider } from './contexts/AuthContext';
 import ErrorBoundary from './components/ErrorBoundary';
 import { initializeSampleData } from './data/sampleData';
 
-import HeroBanner from './components/HeroSection';
+import HeroSection from './components/HeroSection';
 import ProductCategories from './components/ProductCategories';
 import FeaturedProducts from './components/FeaturedProducts';
 import FashionSection from './components/FashionSection';
-import CategorySection from './components/FashionCategories';
+import FashionCategories from './components/fashionCategories';
 import ProductTabs from './components/ProductTabs';
 import Footer from './components/layout/footer';
 import ProductDetail from './pages/ProductDetail';
@@ -60,11 +60,11 @@ const MainLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => (
 // Home page with all components
 const HomePage: React.FC = () => (
   <>
-    <HeroBanner />
+    <HeroSection />
     <ProductCategories />
     <FeaturedProducts />
     <FashionSection />
-    <CategorySection />
+    <FashionCategories />
     <ProductTabs />
   </>
 );
