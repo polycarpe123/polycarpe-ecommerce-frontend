@@ -18,12 +18,12 @@ import { AuthProvider } from './contexts/AuthContext';
 import ErrorBoundary from './components/ErrorBoundary';
 import { initializeSampleData } from './data/sampleData';
 
-import HeroBanner from './components/heroSection';
-import ProductCategories from './components/productCategories';
-import FeaturedProducts from './components/featuredProducts';
-import FashionSection from './components/fashionSection';
-import CategorySection from './components/fashionCategories';
-import ProductTabs from './components/productTabs';
+import HeroBanner from './components/HeroSection';
+import ProductCategories from './components/ProductCategories';
+import FeaturedProducts from './components/FeaturedProducts';
+import FashionSection from './components/FashionSection';
+import CategorySection from './components/FashionCategories';
+import ProductTabs from './components/ProductTabs';
 import Footer from './components/layout/footer';
 import ProductDetail from './pages/ProductDetail';
 import ProductList from './pages/ProductList';

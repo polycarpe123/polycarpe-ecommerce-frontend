@@ -22,6 +22,26 @@ export const categoryService = {
       if (filters?.includeProductCount) params.append('includeProductCount', 'true');
 
       const response = await api.get(`/categories?${params}`);
+      
+      // Handle backend response format: { success: true, data: [...] }
+      if (response.data.success && response.data.data) {
+        const categories = response.data.data.map((category: any) => ({
+          id: category._id || category.id,
+          name: category.name,
+          slug: category.slug || category.name.toLowerCase().replace(/\s+/g, '-'),
+          description: category.description,
+          image: category.image,
+          parentId: category.parentId,
+          status: category.status || 'active',
+          productCount: category.productCount || 0,
+          createdAt: category.createdAt,
+          updatedAt: category.updatedAt
+        }));
+        
+        return categories;
+      }
+      
+      // Fallback for different response format
       return response.data;
     } catch (error) {
       // Fallback to localStorage for guest users
