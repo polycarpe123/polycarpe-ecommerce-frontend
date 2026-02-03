@@ -7,6 +7,8 @@ const router = express.Router();
 // @desc    Get all customers with order information (admin)
 router.get('/', async (req, res) => {
   try {
+    console.log('🔍 Customers route hit!');
+    
     const {
       page = 1,
       limit = 10,
@@ -76,6 +78,8 @@ router.get('/', async (req, res) => {
     );
 
     const total = await Customer.countDocuments(query);
+
+    console.log(`📊 Found ${customersWithOrders.length} customers`);
 
     res.json({
       customers: customersWithOrders,

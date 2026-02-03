@@ -45,12 +45,61 @@ const AdminCustomers: React.FC = () => {
       try {
         setLoading(true);
         setError(null);
+        console.log('🔍 Loading customers from database...');
+        
+        // Check if we have an auth token
+        const token = localStorage.getItem('authToken');
+        console.log('🔑 Auth token present:', !!token);
+        
         const customersData = await customerService.getCustomers();
+        console.log('📊 Customers data received:', customersData);
+        
+        // Check the structure of the data before processing
+        if (!customersData) {
+          console.log('❌ No customers data received');
+          setError('No data received from server');
+          setCustomers([]);
+          return;
+        }
+        
         // Type assertion to handle the additional fields from backend
-        setCustomers(customersData.customers as Customer[] || []);
-      } catch (err) {
-        console.error('Error loading customers:', err);
-        setError('Failed to load customers');
+        const customersList = customersData.customers as Customer[] || [];
+        console.log('👥 Customers list:', customersList);
+        console.log('👥 Customers list type:', typeof customersList);
+        console.log('👥 Is array?', Array.isArray(customersList));
+        
+        // Validate each customer before setting
+        const validCustomers = customersList.filter(customer => {
+          console.log('🔍 Checking customer:', customer);
+          return customer && typeof customer === 'object';
+        });
+        
+        console.log('✅ Valid customers:', validCustomers.length);
+        
+        // If no customers from database, show a helpful message
+        if (validCustomers.length === 0) {
+          console.log('⚠️ No customers found in database');
+          setError('No customers found. Customers will appear here when they register or place orders.');
+        } else {
+          setCustomers(validCustomers);
+        }
+      } catch (err: any) {
+        console.error('❌ Error loading customers:', err);
+        console.error('❌ Error message:', err.message);
+        console.error('❌ Error stack:', err.stack);
+        console.error('❌ Error response:', err.response);
+        console.error('❌ Error status:', err.response?.status);
+        
+        if (err.response?.status === 401) {
+          setError('Authentication failed. Please log out and log back in as admin.');
+        } else if (err.response?.status === 403) {
+          setError('Access denied. Admin privileges required.');
+        } else if (err.code === 'ECONNREFUSED' || err.message.includes('Network Error')) {
+          setError('Cannot connect to backend server. Please ensure the backend is running on port 3001.');
+        } else {
+          setError(`Failed to load customers: ${err.message || 'Unknown error'}`);
+        }
+        
         // Fallback to empty array
         setCustomers([]);
       } finally {
@@ -73,11 +122,16 @@ const AdminCustomers: React.FC = () => {
     setExpandedCustomers(newExpanded);
   };
 
-  const filteredCustomers = customers.filter(customer =>
-    customer.firstName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    customer.lastName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    customer.email.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredCustomers = customers.filter(customer => {
+    // Add safety checks for all customer properties
+    const firstName = customer.firstName || '';
+    const lastName = customer.lastName || '';
+    const email = customer.email || '';
+    
+    return firstName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+           lastName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+           email.toLowerCase().includes(searchTerm.toLowerCase());
+  });
 
   if (!isAuthenticated || user?.role !== 'admin') {
     return <div>Loading...</div>;
@@ -167,19 +221,19 @@ const AdminCustomers: React.FC = () => {
                       <div className="flex items-center">
                         <div className="w-10 h-10 bg-gray-200 rounded-full mr-3 flex items-center justify-center">
                           <span className="text-gray-600 font-medium">
-                            {customer.firstName.charAt(0).toUpperCase()}{customer.lastName.charAt(0).toUpperCase()}
+                            {(customer.firstName || '').charAt(0).toUpperCase()}{(customer.lastName || '').charAt(0).toUpperCase()}
                           </span>
                         </div>
                         <div>
-                          <p className="font-medium text-gray-900">{customer.firstName} {customer.lastName}</p>
-                          <p className="text-sm text-gray-500">ID: {customer.id}</p>
+                          <p className="font-medium text-gray-900">{customer.firstName || ''} {customer.lastName || ''}</p>
+                          <p className="text-sm text-gray-500">ID: {customer.id || 'N/A'}</p>
                         </div>
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
                         <Mail className="w-3 h-3 mr-1 text-gray-400" />
-                        {customer.email}
+                        {customer.email || 'N/A'}
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
@@ -191,7 +245,7 @@ const AdminCustomers: React.FC = () => {
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{customer.totalOrders || 0}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${(customer.totalSpent || 0).toFixed(2)}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {new Date(customer.createdAt).toLocaleDateString()}
+                      {customer.createdAt ? new Date(customer.createdAt).toLocaleDateString() : 'N/A'}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                       {customer.orders && customer.orders.length > 0 && (
@@ -218,29 +272,29 @@ const AdminCustomers: React.FC = () => {
                             Order History
                           </h4>
                           <div className="space-y-2">
-                            {customer.orders.map((order) => (
+                            {customer.orders?.map((order) => (
                               <div key={order.id} className="bg-white p-3 rounded border border-gray-200">
                                 <div className="flex justify-between items-start">
                                   <div>
-                                    <p className="font-medium text-gray-900">{order.orderNumber}</p>
+                                    <p className="font-medium text-gray-900">{order.orderNumber || 'N/A'}</p>
                                     <p className="text-sm text-gray-500">
-                                      {new Date(order.createdAt).toLocaleDateString()} • {order.itemCount} items
+                                      {order.createdAt ? new Date(order.createdAt).toLocaleDateString() : 'N/A'} • {order.itemCount || 0} items
                                     </p>
                                   </div>
                                   <div className="text-right">
-                                    <p className="font-medium text-gray-900">${order.total.toFixed(2)}</p>
+                                    <p className="font-medium text-gray-900">${(order.total || 0).toFixed(2)}</p>
                                     <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
                                       order.status === 'completed' ? 'bg-green-100 text-green-800' :
                                       order.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
                                       order.status === 'processing' ? 'bg-blue-100 text-blue-800' :
                                       'bg-gray-100 text-gray-800'
                                     }`}>
-                                      {order.status}
+                                      {order.status || 'unknown'}
                                     </span>
                                   </div>
                                 </div>
                               </div>
-                            ))}
+                            )) || []}
                           </div>
                         </div>
                       </td>

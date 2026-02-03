@@ -386,15 +386,20 @@ export const customerService = {
     sortOrder?: 'asc' | 'desc';
   }): { customers: Customer[]; total: number; page: number; totalPages: number } => {
     const customersData = localStorage.getItem('customers');
-    let customers = customersData ? JSON.parse(customersData).customers : [];
+    let customers = customersData ? JSON.parse(customersData).customers || [] : [];
+    
+    // Ensure customers is always an array
+    if (!Array.isArray(customers)) {
+      customers = [];
+    }
     
     // Apply filters
     if (filters?.search) {
       const searchLower = filters.search.toLowerCase();
       customers = customers.filter((c: Customer) => 
-        c.firstName.toLowerCase().includes(searchLower) ||
-        c.lastName.toLowerCase().includes(searchLower) ||
-        c.email.toLowerCase().includes(searchLower)
+        (c.firstName || '').toLowerCase().includes(searchLower) ||
+        (c.lastName || '').toLowerCase().includes(searchLower) ||
+        (c.email || '').toLowerCase().includes(searchLower)
       );
     }
     

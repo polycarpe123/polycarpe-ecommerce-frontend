@@ -42,6 +42,7 @@ const orderRoutes = require('./routes/orders.cjs');
 const customerRoutes = require('./routes/customers.cjs');
 const notificationRoutes = require('./routes/notifications.cjs');
 
+console.log('📦 Registering routes...');
 // API Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/products', productRoutes);
@@ -50,8 +51,17 @@ app.use('/api/orders', orderRoutes);
 app.use('/api/customers', customerRoutes);
 app.use('/api/notifications', notificationRoutes);
 
+console.log('✅ Routes registered');
+
+// Test route
+app.get('/api/test', (req, res) => {
+  console.log('🎯 Test route hit!');
+  res.json({ message: 'Test route works!' });
+});
+
 // Health check endpoint
 app.get('/api/health', (req, res) => {
+  console.log('🏥 Health check hit!');
   res.json({ 
     status: 'OK', 
     message: 'Kapee E-commerce API is running',
