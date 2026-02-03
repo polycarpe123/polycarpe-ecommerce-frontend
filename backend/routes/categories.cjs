@@ -1,5 +1,6 @@
 const express = require('express');
 const Category = require('../models/Category.cjs');
+const Notification = require('../models/Notification.cjs');
 const router = express.Router();
 
 // @route   GET /api/categories
@@ -69,8 +70,26 @@ router.post('/', (req, res) => {
       });
     }
     
-    category.save().then((savedCategory) => {
+    category.save().then(async (savedCategory) => {
       console.log('Category saved successfully:', savedCategory);
+      
+      // Create notification for new category
+      try {
+        const notification = new Notification({
+          title: 'New Category Created',
+          message: `Category "${savedCategory.name}" has been added`,
+          type: 'category',
+          action: 'created',
+          entityId: savedCategory._id,
+          entityName: savedCategory.name,
+          priority: 'medium'
+        });
+        await notification.save();
+        console.log('Category notification created');
+      } catch (notifError) {
+        console.error('Error creating category notification:', notifError);
+      }
+      
       res.status(201).json(savedCategory);
     }).catch((error) => {
       console.error('Save category error:', error);

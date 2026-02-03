@@ -1,5 +1,6 @@
 const express = require('express');
 const Product = require('../models/Product.cjs');
+const Notification = require('../models/Notification.cjs');
 const router = express.Router();
 
 // @route   GET /api/products
@@ -117,8 +118,26 @@ router.post('/', (req, res) => {
       });
     }
     
-    product.save().then((savedProduct) => {
+    product.save().then(async (savedProduct) => {
       console.log('Product saved successfully:', savedProduct);
+      
+      // Create notification for new product
+      try {
+        const notification = new Notification({
+          title: 'New Product Created',
+          message: `Product "${savedProduct.name}" has been added to the catalog`,
+          type: 'product',
+          action: 'created',
+          entityId: savedProduct._id,
+          entityName: savedProduct.name,
+          priority: 'medium'
+        });
+        await notification.save();
+        console.log('Product notification created');
+      } catch (notifError) {
+        console.error('Error creating product notification:', notifError);
+      }
+      
       res.status(201).json(savedProduct);
     }).catch((error) => {
       console.error('Save product error:', error);
