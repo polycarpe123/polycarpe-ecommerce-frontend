@@ -97,14 +97,52 @@ router.get('/:id', async (req, res) => {
 
 // @route   POST /api/products
 // @desc    Create new product
-router.post('/', async (req, res) => {
+router.post('/', (req, res) => {
+  console.log('Products POST endpoint hit');
   try {
+    console.log('Received product data:', req.body);
+    
     const product = new Product(req.body);
-    await product.save();
-    res.status(201).json(product);
+    
+    // Validate before saving
+    const validationError = product.validateSync();
+    if (validationError) {
+      console.error('Product validation error:', validationError);
+      return res.status(400).json({ 
+        message: 'Validation failed', 
+        errors: Object.keys(validationError.errors).map(key => ({
+          field: key,
+          message: validationError.errors[key].message
+        }))
+      });
+    }
+    
+    product.save().then((savedProduct) => {
+      console.log('Product saved successfully:', savedProduct);
+      res.status(201).json(savedProduct);
+    }).catch((error) => {
+      console.error('Save product error:', error);
+      
+      // Handle duplicate key errors
+      if (error.code === 11000) {
+        const field = Object.keys(error.keyValue)[0];
+        return res.status(400).json({ 
+          message: `${field} already exists`, 
+          field: field 
+        });
+      }
+      
+      res.status(500).json({ 
+        message: 'Server error', 
+        error: error.message 
+      });
+    });
   } catch (error) {
     console.error('Create product error:', error);
-    res.status(500).json({ message: 'Server error', error: error.message });
+    res.status(500).json({ 
+      message: 'Server error', 
+      error: error.message 
+    });
   }
 });
 

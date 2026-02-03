@@ -307,7 +307,8 @@ export const productService = {
     try {
       const response = await api.post('/products', product);
       return response.data;
-    } catch {
+    } catch (error) {
+      console.error('Error creating product in database:', error);
       // Fallback to localStorage for guest users
       const products = JSON.parse(localStorage.getItem('products') || '[]');
       

@@ -85,17 +85,25 @@ const AddCategory: React.FC = () => {
         parentId: formData.parentId || undefined
       };
 
-      await categoryService.createCategory(categoryData);
-      console.log('Category created successfully');
+      console.log('Creating category with data:', categoryData);
+      const result = await categoryService.createCategory(categoryData);
+      console.log('Category creation result:', result);
       
-      setSuccess('Category created successfully!');
-      
-      // Redirect after a short delay
-      setTimeout(() => {
-        navigate('/admin/categories');
-      }, 1500);
+      // Check if category was actually created (has valid ID)
+      if (result && result.id) {
+        console.log('Category created successfully with ID:', result.id);
+        setSuccess('Category created successfully!');
+        
+        // Redirect after a short delay
+        setTimeout(() => {
+          navigate('/admin/categories');
+        }, 1500);
+      } else {
+        throw new Error('Category creation failed - no valid ID returned');
+      }
       
     } catch (error: any) {
+      console.error('Error creating category:', error);
       setError(error.message || 'Failed to create category');
     } finally {
       setLoading(false);

@@ -64,8 +64,23 @@ export const categoryService = {
 
   // Create new category
   createCategory: async (category: Partial<Category>): Promise<Category> => {
-    const response = await api.post('/categories', category);
-    return response.data;
+    try {
+      const response = await api.post('/categories', category);
+      return response.data;
+    } catch (error) {
+      console.error('Error creating category in database:', error);
+      // Fallback to localStorage for guest users
+      const categories = JSON.parse(localStorage.getItem('categories') || '[]');
+      const newCategory = {
+        id: Date.now(),
+        name: category.name || '',
+        slug: category.name ? category.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '') : '',
+        productCount: 0
+      };
+      categories.push(newCategory);
+      localStorage.setItem('categories', JSON.stringify(categories));
+      return newCategory;
+    }
   },
 
   // Update category

@@ -122,8 +122,17 @@ const AddProduct: React.FC = () => {
         stock: Number(formData.stock)
       };
 
-      await productService.createProduct(productData);
-      navigate('/admin/products');
+      console.log('Creating product with data:', productData);
+      const result = await productService.createProduct(productData);
+      console.log('Product creation result:', result);
+      
+      // Check if product was actually created (has valid ID)
+      if (result && result.id) {
+        console.log('Product created successfully with ID:', result.id);
+        navigate('/admin/products');
+      } else {
+        throw new Error('Product creation failed - no valid ID returned');
+      }
     } catch (error) {
       console.error('Error creating product:', error);
       setError('Failed to create product. Please try again.');

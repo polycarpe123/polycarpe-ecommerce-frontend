@@ -1,9 +1,9 @@
 import React from 'react';
-import FashionSection from '../components/FashionSection';
-import FeaturedProducts from '../components/FeaturedProducts';
-import ProductCategories from '../components/ProductCategories';
-import HeroBanner from '../components/HeroSection';
-import ProductTabs from '../components/ProductTabs';
+import FashionSection from '../components/fashionSection';
+import FeaturedProducts from '../components/featuredProducts';
+import ProductCategories from '../components/productCategories';
+import HeroBanner from '../components/heroSection';
+import ProductTabs from '../components/productTabs';
 
 const Home: React.FC = () => {
   return (

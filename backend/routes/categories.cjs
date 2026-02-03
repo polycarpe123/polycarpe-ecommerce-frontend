@@ -49,14 +49,52 @@ router.get('/:id', async (req, res) => {
 
 // @route   POST /api/categories
 // @desc    Create new category
-router.post('/', async (req, res) => {
+router.post('/', (req, res) => {
+  console.log('Categories POST endpoint hit');
   try {
+    console.log('Received category data:', req.body);
+    
     const category = new Category(req.body);
-    await category.save();
-    res.status(201).json(category);
+    
+    // Validate before saving
+    const validationError = category.validateSync();
+    if (validationError) {
+      console.error('Category validation error:', validationError);
+      return res.status(400).json({ 
+        message: 'Validation failed', 
+        errors: Object.keys(validationError.errors).map(key => ({
+          field: key,
+          message: validationError.errors[key].message
+        }))
+      });
+    }
+    
+    category.save().then((savedCategory) => {
+      console.log('Category saved successfully:', savedCategory);
+      res.status(201).json(savedCategory);
+    }).catch((error) => {
+      console.error('Save category error:', error);
+      
+      // Handle duplicate key errors
+      if (error.code === 11000) {
+        const field = Object.keys(error.keyValue)[0];
+        return res.status(400).json({ 
+          message: `${field} already exists`, 
+          field: field 
+        });
+      }
+      
+      res.status(500).json({ 
+        message: 'Server error', 
+        error: error.message 
+      });
+    });
   } catch (error) {
     console.error('Create category error:', error);
-    res.status(500).json({ message: 'Server error', error: error.message });
+    res.status(500).json({ 
+      message: 'Server error', 
+      error: error.message 
+    });
   }
 });
 
