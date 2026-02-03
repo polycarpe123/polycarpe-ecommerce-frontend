@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Bell, X, Check, Trash2, Filter, ChevronDown } from 'lucide-react';
+import { Bell, X, Check, Trash2 } from 'lucide-react';
 import { notificationService, type Notification } from '../../services/notificationService';
 
 interface NotificationDropdownProps {
