@@ -124,7 +124,7 @@ export const orderService = {
       // Try to create order in database
       const response = await api.post('/orders', orderData);
       return response.data;
-    } catch (error) {
+    } catch {
       // Fallback to localStorage for guest users
       console.log('Database order creation failed, using localStorage');
       return orderService.createGuestOrder(orderData);

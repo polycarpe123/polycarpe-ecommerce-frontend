@@ -15,19 +15,11 @@ import {
   Truck,
   CheckCircle,
   Clock,
-  XCircle
+  XCircle,
+  RefreshCw
 } from 'lucide-react';
 import { useApp } from '../../../contexts/AppContext';
-
-interface Order {
-  id: string;
-  customer: string;
-  email: string;
-  total: number;
-  status: 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
-  date: string;
-  items: number;
-}
+import { orderService, type Order } from '../../../services/orderService';
 
 const AdminOrders: React.FC = () => {
   const { user, isAuthenticated } = useApp();
@@ -36,6 +28,8 @@ const AdminOrders: React.FC = () => {
   const [orders, setOrders] = useState<Order[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedStatus, setSelectedStatus] = useState('all');
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   // Check if user is admin
   useEffect(() => {
@@ -44,47 +38,40 @@ const AdminOrders: React.FC = () => {
     }
   }, [isAuthenticated, user, navigate]);
 
-  // Mock orders data
+  // Fetch orders from database
   useEffect(() => {
-    setOrders([
-      {
-        id: '#1001',
-        customer: 'John Doe',
-        email: 'john@example.com',
-        total: 125.99,
-        status: 'delivered',
-        date: '2024-01-15',
-        items: 3
-      },
-      {
-        id: '#1002',
-        customer: 'Jane Smith',
-        email: 'jane@example.com',
-        total: 89.50,
-        status: 'shipped',
-        date: '2024-01-16',
-        items: 2
-      },
-      {
-        id: '#1003',
-        customer: 'Bob Johnson',
-        email: 'bob@example.com',
-        total: 234.75,
-        status: 'processing',
-        date: '2024-01-17',
-        items: 5
-      },
-      {
-        id: '#1004',
-        customer: 'Alice Brown',
-        email: 'alice@example.com',
-        total: 67.25,
-        status: 'pending',
-        date: '2024-01-18',
-        items: 1
+    const loadOrders = async () => {
+      try {
+        setLoading(true);
+        const ordersData = await orderService.getCustomerOrders(); // No customerId = all orders
+        setOrders(ordersData.orders);
+      } catch (err) {
+        console.error('Error loading orders:', err);
+        setError('Failed to load orders');
+      } finally {
+        setLoading(false);
       }
-    ]);
-  }, []);
+    };
+
+    if (isAuthenticated && user?.role === 'admin') {
+      loadOrders();
+    }
+  }, [isAuthenticated, user]);
+
+  // Refresh orders
+  const refreshOrders = async () => {
+    try {
+      setLoading(true);
+      const ordersData = await orderService.getCustomerOrders(); // No customerId = all orders
+      setOrders(ordersData.orders);
+      setError(null);
+    } catch (err) {
+      console.error('Error refreshing orders:', err);
+      setError('Failed to refresh orders');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const menuItems = [
     { icon: <Package className="w-5 h-5" />, label: 'Dashboard', path: '/admin/dashboard' },
@@ -118,9 +105,13 @@ const AdminOrders: React.FC = () => {
   };
 
   const filteredOrders = orders.filter(order => {
-    const matchesSearch = order.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         order.customer.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         order.email.toLowerCase().includes(searchTerm.toLowerCase());
+    const orderNumber = order.orderNumber?.toString() || order.id?.toString() || '';
+    const customerEmail = order.customerEmail || '';
+    const customerName = `${order.shippingAddress?.firstName} ${order.shippingAddress?.lastName}`.trim();
+    
+    const matchesSearch = orderNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         customerEmail.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = selectedStatus === 'all' || order.status === selectedStatus;
     return matchesSearch && matchesStatus;
   });
@@ -175,6 +166,14 @@ const AdminOrders: React.FC = () => {
             </div>
 
             <div className="flex items-center space-x-4">
+              <button 
+                onClick={refreshOrders}
+                disabled={loading}
+                className="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 disabled:opacity-50 flex items-center gap-2"
+              >
+                <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+                Refresh
+              </button>
               <button className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">
                 Export Orders
               </button>
@@ -184,56 +183,90 @@ const AdminOrders: React.FC = () => {
 
         {/* Orders Content */}
         <main className="p-6">
-          {/* Stats Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
-            <div className="bg-white rounded-lg shadow p-6">
-              <div className="flex items-center">
-                <div className="bg-blue-500 p-3 rounded-lg text-white">
-                  <ShoppingCart className="w-6 h-6" />
+          {/* Error State */}
+          {error && (
+            <div className="bg-red-50 border border-red-200 rounded-md p-4 mb-6">
+              <div className="flex">
+                <div className="flex-shrink-0">
+                  <XCircle className="h-5 w-5 text-red-400" />
                 </div>
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600">Total Orders</p>
-                  <p className="text-2xl font-bold text-gray-900">1,234</p>
-                </div>
-              </div>
-            </div>
-            
-            <div className="bg-white rounded-lg shadow p-6">
-              <div className="flex items-center">
-                <div className="bg-green-500 p-3 rounded-lg text-white">
-                  <CheckCircle className="w-6 h-6" />
-                </div>
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600">Completed</p>
-                  <p className="text-2xl font-bold text-gray-900">892</p>
+                <div className="ml-3">
+                  <h3 className="text-sm font-medium text-red-800">Error</h3>
+                  <div className="mt-2 text-sm text-red-700">
+                    {error}
+                  </div>
                 </div>
               </div>
             </div>
-            
-            <div className="bg-white rounded-lg shadow p-6">
-              <div className="flex items-center">
-                <div className="bg-yellow-500 p-3 rounded-lg text-white">
-                  <Clock className="w-6 h-6" />
+          )}
+
+          {/* Loading State */}
+          {loading && (
+            <div className="flex items-center justify-center py-12">
+              <RefreshCw className="h-8 w-8 text-blue-600 animate-spin" />
+              <span className="ml-2 text-gray-600">Loading orders...</span>
+            </div>
+          )}
+
+          {/* Orders Content */}
+          {!loading && !error && (
+            <>
+              {/* Stats Cards */}
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+                <div className="bg-white rounded-lg shadow p-6">
+                  <div className="flex items-center">
+                    <div className="bg-blue-500 p-3 rounded-lg text-white">
+                      <ShoppingCart className="w-6 h-6" />
+                    </div>
+                    <div className="ml-4">
+                      <p className="text-sm font-medium text-gray-600">Total Orders</p>
+                      <p className="text-2xl font-bold text-gray-900">{orders.length}</p>
+                    </div>
+                  </div>
                 </div>
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600">Pending</p>
-                  <p className="text-2xl font-bold text-gray-900">156</p>
+                
+                <div className="bg-white rounded-lg shadow p-6">
+                  <div className="flex items-center">
+                    <div className="bg-green-500 p-3 rounded-lg text-white">
+                      <CheckCircle className="w-6 h-6" />
+                    </div>
+                    <div className="ml-4">
+                      <p className="text-sm font-medium text-gray-600">Completed</p>
+                      <p className="text-2xl font-bold text-gray-900">
+                        {orders.filter(o => o.status === 'delivered').length}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="bg-white rounded-lg shadow p-6">
+                  <div className="flex items-center">
+                    <div className="bg-yellow-500 p-3 rounded-lg text-white">
+                      <Clock className="w-6 h-6" />
+                    </div>
+                    <div className="ml-4">
+                      <p className="text-sm font-medium text-gray-600">Pending</p>
+                      <p className="text-2xl font-bold text-gray-900">
+                        {orders.filter(o => o.status === 'pending' || o.status === 'confirmed').length}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="bg-white rounded-lg shadow p-6">
+                  <div className="flex items-center">
+                    <div className="bg-purple-500 p-3 rounded-lg text-white">
+                      <Truck className="w-6 h-6" />
+                    </div>
+                    <div className="ml-4">
+                      <p className="text-sm font-medium text-gray-600">In Transit</p>
+                      <p className="text-2xl font-bold text-gray-900">
+                        {orders.filter(o => o.status === 'processing' || o.status === 'shipped').length}
+                      </p>
+                    </div>
+                  </div>
                 </div>
               </div>
-            </div>
-            
-            <div className="bg-white rounded-lg shadow p-6">
-              <div className="flex items-center">
-                <div className="bg-purple-500 p-3 rounded-lg text-white">
-                  <Truck className="w-6 h-6" />
-                </div>
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600">In Transit</p>
-                  <p className="text-2xl font-bold text-gray-900">186</p>
-                </div>
-              </div>
-            </div>
-          </div>
 
           {/* Filters */}
           <div className="bg-white rounded-lg shadow p-6 mb-6">
@@ -290,12 +323,18 @@ const AdminOrders: React.FC = () => {
                   {filteredOrders.map((order) => (
                     <tr key={order.id} className="hover:bg-gray-50">
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <p className="font-medium text-gray-900">{order.id}</p>
-                        <p className="text-sm text-gray-500">{order.email}</p>
+                        <p className="font-medium text-gray-900">{order.orderNumber || `#${order.id}`}</p>
+                        <p className="text-sm text-gray-500">{order.customerEmail}</p>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{order.customer}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{order.date}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{order.items}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        {order.shippingAddress ? `${order.shippingAddress.firstName} ${order.shippingAddress.lastName}` : 'Unknown'}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        {new Date(order.createdAt).toLocaleDateString()}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        {order.items?.length || 0}
+                      </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${(order.total || 0).toFixed(2)}</td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center">
@@ -318,6 +357,8 @@ const AdminOrders: React.FC = () => {
               </table>
             </div>
           </div>
+            </>
+          )}
         </main>
       </div>
 

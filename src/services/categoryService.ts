@@ -43,7 +43,7 @@ export const categoryService = {
       
       // Fallback for different response format
       return response.data;
-    } catch (error) {
+    } catch {
       // Fallback to localStorage for guest users
       const categories = JSON.parse(localStorage.getItem('categories') || '[]');
       return Array.isArray(categories) ? categories : [];

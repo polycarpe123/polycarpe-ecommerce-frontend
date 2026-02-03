@@ -1,16 +1,16 @@
 // Utility functions for safe number formatting
-export const safeToFixed = (value: any, decimals: number = 2): string => {
+export const safeToFixed = (value: number | string | null | undefined, decimals: number = 2): string => {
   if (value === null || value === undefined || isNaN(Number(value))) {
     return '0.00';
   }
   return Number(value).toFixed(decimals);
 };
 
-export const safeCurrency = (value: any, decimals: number = 2): string => {
+export const safeCurrency = (value: number | string | null | undefined, decimals: number = 2): string => {
   return `$${safeToFixed(value, decimals)}`;
 };
 
-export const safeNumber = (value: any): number => {
+export const safeNumber = (value: number | string | null | undefined): number => {
   if (value === null || value === undefined || isNaN(Number(value))) {
     return 0;
   }

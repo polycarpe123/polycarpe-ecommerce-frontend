@@ -1,6 +1,42 @@
 // Product Service API
 import api from './api';
 
+interface BackendProduct {
+  _id?: string;
+  id?: string | number;
+  name: string;
+  slug?: string;
+  sku?: string;
+  price: number;
+  oldPrice?: number;
+  costPrice?: number;
+  description?: string;
+  shortDescription?: string;
+  images?: string[];
+  category?: string;
+  categoryId?: string | number | { name: string };
+  subcategory?: string;
+  subcategoryId?: string | number;
+  colors?: { name: string; hex: string; inStock?: boolean }[];
+  sizes?: { name: string; inStock?: boolean }[];
+  variants?: ProductVariant[];
+  brand?: string;
+  brandId?: string | number;
+  fabric?: string;
+  fit?: string;
+  features?: string[];
+  offers?: string[];
+  tags?: string[];
+  rating?: number;
+  reviews?: number;
+  quantity?: number;
+  stock?: number;
+  status?: string;
+  featured?: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
 export interface Product {
   id: string | number;
   name: string;
@@ -136,7 +172,7 @@ export const productService = {
       
       // Handle backend response format: { success: true, data: [...], pagination: {...} }
       if (response.data.success && response.data.data) {
-        const products = response.data.data.map((product: any) => ({
+        const products = response.data.data.map((product: BackendProduct) => ({
           id: product._id || product.id,
           name: product.name,
           slug: product.slug || product.name.toLowerCase().replace(/\s+/g, '-'),
@@ -145,7 +181,9 @@ export const productService = {
           oldPrice: product.oldPrice,
           description: product.description,
           images: product.images || [],
-          category: product.categoryId?.name || product.category || 'Uncategorized',
+          category: typeof product.categoryId === 'object' && product.categoryId?.name 
+            ? product.categoryId.name 
+            : product.category || 'Uncategorized',
           stock: product.quantity || product.stock || 0,
           status: product.status || 'active',
           featured: product.featured || false,
@@ -166,7 +204,7 @@ export const productService = {
       
       // Fallback for different response format
       return response.data;
-    } catch (error) {
+    } catch {
       // Fallback to localStorage for guest users
       const products = JSON.parse(localStorage.getItem('products') || '[]');
       let filteredProducts = Array.isArray(products) ? products : [];
@@ -217,7 +255,9 @@ export const productService = {
           description: product.description,
           shortDescription: product.shortDescription,
           images: product.images || [],
-          category: product.categoryId?.name || product.category || 'Uncategorized',
+          category: typeof product.categoryId === 'object' && product.categoryId?.name 
+            ? product.categoryId.name 
+            : product.category || 'Uncategorized',
           categoryId: product.categoryId,
           subcategory: product.subcategory,
           subcategoryId: product.subcategoryId,
@@ -243,7 +283,7 @@ export const productService = {
       
       // Fallback for different response format
       return response.data;
-    } catch (error) {
+    } catch {
       // Fallback to localStorage for guest users
       const products = JSON.parse(localStorage.getItem('products') || '[]');
       const product = products.find((p: any) => p.id === id);
@@ -267,7 +307,7 @@ export const productService = {
     try {
       const response = await api.post('/products', product);
       return response.data;
-    } catch (error) {
+    } catch {
       // Fallback to localStorage for guest users
       const products = JSON.parse(localStorage.getItem('products') || '[]');
       
@@ -388,7 +428,7 @@ export const productService = {
       
       // Handle backend response format: { success: true, data: [...] }
       if (response.data.success && response.data.data) {
-        const products = response.data.data.map((product: any) => ({
+        const products = response.data.data.map((product: BackendProduct) => ({
           id: product._id || product.id,
           name: product.name,
           slug: product.slug || product.name.toLowerCase().replace(/\s+/g, '-'),
@@ -399,7 +439,9 @@ export const productService = {
           description: product.description,
           shortDescription: product.shortDescription,
           images: product.images || [],
-          category: product.categoryId?.name || product.category || 'Uncategorized',
+          category: typeof product.categoryId === 'object' && product.categoryId?.name 
+            ? product.categoryId.name 
+            : product.category || 'Uncategorized',
           categoryId: product.categoryId,
           subcategory: product.subcategory,
           subcategoryId: product.subcategoryId,
@@ -427,7 +469,7 @@ export const productService = {
       
       // Fallback for different response format
       return response.data;
-    } catch (error) {
+    } catch {
       // Fallback to localStorage for guest users
       const products = JSON.parse(localStorage.getItem('products') || '[]');
       const currentProduct = products.find((p: any) => p.id === productId);

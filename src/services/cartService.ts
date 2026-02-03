@@ -40,7 +40,7 @@ export const cartService = {
       // Try to get cart from database first
       const response = await api.get('/cart');
       return response.data;
-    } catch (error) {
+    } catch {
       // Fallback to localStorage for guest users
       console.log('Database cart not found, using localStorage');
       return cartService.getLocalCart();
@@ -62,7 +62,7 @@ export const cartService = {
       // Try to add to database cart
       const response = await api.post('/cart/items', item);
       return response.data;
-    } catch (error) {
+    } catch {
       // Fallback to localStorage
       console.log('Database cart update failed, using localStorage');
       return cartService.addToLocalCart(item);
@@ -75,7 +75,7 @@ export const cartService = {
       // Try to update database cart
       const response = await api.put(`/cart/items/${itemId}`, { quantity });
       return response.data;
-    } catch (error) {
+    } catch {
       // Fallback to localStorage
       console.log('Database cart update failed, using localStorage');
       return cartService.updateLocalCartItem(itemId, quantity);
@@ -88,7 +88,7 @@ export const cartService = {
       // Try to remove from database cart
       const response = await api.delete(`/cart/items/${itemId}`);
       return response.data;
-    } catch (error) {
+    } catch {
       // Fallback to localStorage
       console.log('Database cart update failed, using localStorage');
       return cartService.removeFromLocalCart(itemId);
@@ -101,7 +101,7 @@ export const cartService = {
       // Try to clear database cart
       const response = await api.delete('/cart');
       return response.data;
-    } catch (error) {
+    } catch {
       // Fallback to localStorage
       console.log('Database cart clear failed, using localStorage');
       return cartService.clearLocalCart();
@@ -114,7 +114,7 @@ export const cartService = {
       // Try database summary
       const response = await api.get('/cart/summary');
       return response.data;
-    } catch (error) {
+    } catch {
       // Fallback to localStorage
       const cart = cartService.getLocalCart();
       return {

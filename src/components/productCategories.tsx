@@ -67,7 +67,7 @@ const ProductCategories = () => {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-return (
+  return (
     <section className="py-12 bg-gray-50">
       <div className="container mx-auto px-4 max-w-7xl">
         {loading ? (

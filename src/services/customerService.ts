@@ -103,7 +103,7 @@ export const customerService = {
     try {
       const response = await api.post('/auth/login', credentials);
       return response.data;
-    } catch (error) {
+    } catch {
       // Fallback to localStorage for demo
       console.log('Database login failed, using localStorage');
       return customerService.mockLogin(credentials);
@@ -114,7 +114,7 @@ export const customerService = {
     try {
       const response = await api.post('/auth/register', userData);
       return response.data;
-    } catch (error) {
+    } catch {
       // Fallback to localStorage for demo
       console.log('Database registration failed, using localStorage');
       return customerService.mockRegister(userData);
@@ -124,7 +124,7 @@ export const customerService = {
   logout: async (): Promise<void> => {
     try {
       await api.post('/auth/logout');
-    } catch (error) {
+    } catch {
       console.log('Database logout failed, clearing localStorage');
     }
     localStorage.removeItem('authToken');
@@ -136,7 +136,7 @@ export const customerService = {
     try {
       const response = await api.get(`/customers/${customerId || 'me'}`);
       return response.data;
-    } catch (error) {
+    } catch {
       // Fallback to localStorage
       console.log('Database customer fetch failed, using localStorage');
       return customerService.getCustomerFromStorage();
@@ -147,7 +147,7 @@ export const customerService = {
     try {
       const response = await api.put(`/customers/${customerId}`, data);
       return response.data;
-    } catch (error) {
+    } catch {
       // Fallback to localStorage
       console.log('Database customer update failed, using localStorage');
       return customerService.updateCustomerInStorage(customerId, data);
@@ -157,7 +157,7 @@ export const customerService = {
   deleteCustomer: async (customerId: string | number): Promise<void> => {
     try {
       await api.delete(`/customers/${customerId}`);
-    } catch (error) {
+    } catch {
       // Fallback to localStorage
       console.log('Database customer deletion failed, using localStorage');
       customerService.deleteCustomerFromStorage(customerId);
@@ -377,16 +377,24 @@ export const customerService = {
     }
   },
 
-  getCustomersFromStorage: (filters?: any): { customers: Customer[]; total: number; page: number; totalPages: number } => {
+  getCustomersFromStorage: (filters?: {
+    page?: number;
+    limit?: number;
+    search?: string;
+    status?: 'active' | 'inactive' | 'all';
+    sortBy?: 'createdAt' | 'name' | 'email';
+    sortOrder?: 'asc' | 'desc';
+  }): { customers: Customer[]; total: number; page: number; totalPages: number } => {
     const customersData = localStorage.getItem('customers');
     let customers = customersData ? JSON.parse(customersData).customers : [];
     
     // Apply filters
     if (filters?.search) {
+      const searchLower = filters.search.toLowerCase();
       customers = customers.filter((c: Customer) => 
-        c.firstName.toLowerCase().includes(filters.search.toLowerCase()) ||
-        c.lastName.toLowerCase().includes(filters.search.toLowerCase()) ||
-        c.email.toLowerCase().includes(filters.search.toLowerCase())
+        c.firstName.toLowerCase().includes(searchLower) ||
+        c.lastName.toLowerCase().includes(searchLower) ||
+        c.email.toLowerCase().includes(searchLower)
       );
     }
     
