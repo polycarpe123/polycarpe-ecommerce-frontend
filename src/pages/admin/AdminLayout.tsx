@@ -15,17 +15,34 @@ import { useApp } from '../../contexts/AppContext';
 import NotificationDropdown from '../../components/admin/NotificationDropdown';
 
 const AdminLayout: React.FC = () => {
-  const { user, isAuthenticated } = useApp();
+  const { user, isAuthenticated, authLoading } = useApp();
   const navigate = useNavigate();
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   // Check if user is admin
   useEffect(() => {
-    if (!isAuthenticated || user?.role !== 'admin') {
-      navigate('/');
+    // Only redirect if we're sure about the authentication state
+    if (!authLoading) {
+      if (!isAuthenticated) {
+        navigate('/');
+      } else if (user && user.role !== 'admin') {
+        navigate('/');
+      }
     }
-  }, [isAuthenticated, user, navigate]);
+  }, [isAuthenticated, user, navigate, authLoading]);
+
+  // Show loading spinner while checking authentication
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-gray-100 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Loading admin dashboard...</p>
+        </div>
+      </div>
+    );
+  }
 
   const menuItems = [
     { icon: <Home className="w-5 h-5" />, label: 'Dashboard', path: '/admin/dashboard' },

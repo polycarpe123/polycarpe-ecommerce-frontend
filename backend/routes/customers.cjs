@@ -1,9 +1,10 @@
 const express = require('express');
 const Customer = require('../models/Customer.cjs');
+const Order = require('../models/Order.cjs');
 const router = express.Router();
 
 // @route   GET /api/customers
-// @desc    Get all customers (admin)
+// @desc    Get all customers with order information (admin)
 router.get('/', async (req, res) => {
   try {
     const {
@@ -42,10 +43,42 @@ router.get('/', async (req, res) => {
       .skip((page - 1) * limit)
       .exec();
 
+    // Get order information for each customer
+    const customersWithOrders = await Promise.all(
+      customers.map(async (customer) => {
+        const orders = await Order.find({ 
+          $or: [
+            { customerEmail: customer.email },
+            { customerId: customer._id }
+          ]
+        });
+
+        const totalOrders = orders.length;
+        const totalSpent = orders.reduce((sum, order) => sum + (order.total || 0), 0);
+        const lastOrderDate = orders.length > 0 ? 
+          new Date(Math.max(...orders.map(o => new Date(o.createdAt)))) : null;
+
+        return {
+          ...customer.toObject(),
+          totalOrders,
+          totalSpent,
+          lastOrderDate,
+          orders: orders.map(order => ({
+            id: order._id,
+            orderNumber: order.orderNumber,
+            status: order.status,
+            total: order.total,
+            createdAt: order.createdAt,
+            itemCount: order.items ? order.items.length : 0
+          }))
+        };
+      })
+    );
+
     const total = await Customer.countDocuments(query);
 
     res.json({
-      customers,
+      customers: customersWithOrders,
       total,
       page: parseInt(page),
       totalPages: Math.ceil(total / limit)

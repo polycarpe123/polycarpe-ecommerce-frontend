@@ -70,25 +70,25 @@ router.post('/', (req, res) => {
       });
     }
     
-    category.save().then(async (savedCategory) => {
+    category.save().then((savedCategory) => {
       console.log('Category saved successfully:', savedCategory);
       
       // Create notification for new category
-      try {
-        const notification = new Notification({
-          title: 'New Category Created',
-          message: `Category "${savedCategory.name}" has been added`,
-          type: 'category',
-          action: 'created',
-          entityId: savedCategory._id,
-          entityName: savedCategory.name,
-          priority: 'medium'
-        });
-        await notification.save();
+      const notification = new Notification({
+        title: 'New Category Created',
+        message: `Category "${savedCategory.name}" has been added`,
+        type: 'category',
+        action: 'created',
+        entityId: savedCategory._id,
+        entityName: savedCategory.name,
+        priority: 'medium'
+      });
+      
+      notification.save().then(() => {
         console.log('Category notification created');
-      } catch (notifError) {
+      }).catch((notifError) => {
         console.error('Error creating category notification:', notifError);
-      }
+      });
       
       res.status(201).json(savedCategory);
     }).catch((error) => {

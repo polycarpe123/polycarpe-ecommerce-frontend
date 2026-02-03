@@ -118,25 +118,25 @@ router.post('/', (req, res) => {
       });
     }
     
-    product.save().then(async (savedProduct) => {
+    product.save().then((savedProduct) => {
       console.log('Product saved successfully:', savedProduct);
       
       // Create notification for new product
-      try {
-        const notification = new Notification({
-          title: 'New Product Created',
-          message: `Product "${savedProduct.name}" has been added to the catalog`,
-          type: 'product',
-          action: 'created',
-          entityId: savedProduct._id,
-          entityName: savedProduct.name,
-          priority: 'medium'
-        });
-        await notification.save();
+      const notification = new Notification({
+        title: 'New Product Created',
+        message: `Product "${savedProduct.name}" has been added to the catalog`,
+        type: 'product',
+        action: 'created',
+        entityId: savedProduct._id,
+        entityName: savedProduct.name,
+        priority: 'medium'
+      });
+      
+      notification.save().then(() => {
         console.log('Product notification created');
-      } catch (notifError) {
+      }).catch((notifError) => {
         console.error('Error creating product notification:', notifError);
-      }
+      });
       
       res.status(201).json(savedProduct);
     }).catch((error) => {

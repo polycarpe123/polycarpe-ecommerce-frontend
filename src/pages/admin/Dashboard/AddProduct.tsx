@@ -42,6 +42,16 @@ const AddProduct: React.FC = () => {
     tags: []
   });
 
+  // Auto-generate SKU when name changes
+  const generateSKU = (name: string) => {
+    if (!name.trim()) return '';
+    return name
+      .toUpperCase()
+      .replace(/[^A-Z0-9\s]/g, '')
+      .replace(/\s+/g, '-')
+      .substring(0, 10) + '-' + Date.now().toString().slice(-4);
+  };
+
   React.useEffect(() => {
     loadCategories();
   }, []);
@@ -78,11 +88,21 @@ const AddProduct: React.FC = () => {
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: type === 'checkbox' ? (e.target as HTMLInputElement).checked : 
-             type === 'number' ? Number(value) : value
-    }));
+    
+    setFormData(prev => {
+      const updatedData = {
+        ...prev,
+        [name]: type === 'checkbox' ? (e.target as HTMLInputElement).checked : 
+               type === 'number' ? Number(value) : value
+      };
+      
+      // Auto-generate SKU when name changes and SKU is empty
+      if (name === 'name' && value && !prev.sku) {
+        updatedData.sku = generateSKU(value);
+      }
+      
+      return updatedData;
+    });
   };
 
   const handleImageChange = (index: number, value: string) => {
@@ -109,6 +129,37 @@ const AddProduct: React.FC = () => {
     e.preventDefault();
     setLoading(true);
     setError(null);
+
+    // Validate required fields
+    if (!formData.name.trim()) {
+      setError('Product name is required');
+      setLoading(false);
+      return;
+    }
+    
+    if (!formData.description.trim()) {
+      setError('Product description is required');
+      setLoading(false);
+      return;
+    }
+    
+    if (!formData.price || formData.price <= 0) {
+      setError('Product price must be greater than 0');
+      setLoading(false);
+      return;
+    }
+    
+    if (!formData.category.trim()) {
+      setError('Product category is required');
+      setLoading(false);
+      return;
+    }
+    
+    if (!formData.sku.trim()) {
+      setError('Product SKU is required');
+      setLoading(false);
+      return;
+    }
 
     try {
       // Filter out empty image URLs

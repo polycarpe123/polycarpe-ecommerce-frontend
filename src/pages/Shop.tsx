@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { useApp } from '../contexts/AppContext';
+import { useCart } from '../hooks/useCart';
 
 // Define product interface
 interface Product {
@@ -69,23 +69,29 @@ const PRODUCTS: Record<string, Product> = {
 };
 
 const Shop: React.FC = () => {
-  const { addToCart } = useApp();
+  const { addToCart } = useCart();
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [priceRange, setPriceRange] = useState({ min: 0, max: 1000 });
   const [selectedSize, setSelectedSize] = useState('');
   const [selectedColor, setSelectedColor] = useState('');
 
-  const handleAddToCart = (product: Product) => {
-    const item = {
-      productId: product.id,
-      quantity: 1,
-      name: product.name,
-      price: parseFloat(product.price.replace('$', '')),
-      image: product.images[0],
-      category: product.category
-    };
-    
-    addToCart(item);
+  const handleAddToCart = async (product: Product) => {
+    try {
+      const item = {
+        productId: product.id,
+        quantity: 1,
+        name: product.name,
+        price: parseFloat(product.price.replace('$', '')),
+        image: product.images[0],
+        category: product.category
+      };
+      
+      await addToCart(item);
+      console.log(`${product.name} added to cart!`);
+    } catch (error) {
+      console.error('Failed to add to cart:', error);
+      alert('Failed to add to cart. Please try again.');
+    }
   };
 
   // Get all products from all categories with error handling

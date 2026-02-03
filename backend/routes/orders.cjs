@@ -1,5 +1,6 @@
 const express = require('express');
 const Order = require('../models/Order.cjs');
+const Notification = require('../models/Notification.cjs');
 const router = express.Router();
 
 // @route   GET /api/orders
@@ -93,6 +94,24 @@ router.post('/', async (req, res) => {
     });
     
     await order.save();
+    
+    // Create notification for new order
+    const notification = new Notification({
+      title: 'New Order Received',
+      message: `Order #${orderNumber} has been placed by ${req.body.customerName || 'Customer'}`,
+      type: 'order',
+      action: 'created',
+      entityId: order._id,
+      entityName: orderNumber,
+      priority: 'high'
+    });
+    
+    notification.save().then(() => {
+      console.log('Order notification created');
+    }).catch((notifError) => {
+      console.error('Error creating order notification:', notifError);
+    });
+    
     res.status(201).json(order);
   } catch (error) {
     console.error('Create order error:', error);

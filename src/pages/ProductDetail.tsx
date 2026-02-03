@@ -2,10 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Heart, Star, Share2, Truck, RefreshCw, Shield } from 'lucide-react';
 import { productService, type Product } from '../services/productService';
+import { useCart } from '../hooks/useCart';
 
 const ProductDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { addToCart } = useCart();
   
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
@@ -56,14 +58,35 @@ const ProductDetail: React.FC = () => {
     fetchProduct();
   }, [id]);
 
-  const handleAddToCart = () => {
+  const handleAddToCart = async () => {
     if (!product) return;
     
-    alert(`${product.name} added to cart!`);
+    try {
+      // Create cart item with the structure expected by useCart
+      const cartItem = {
+        productId: product.id,
+        quantity: quantity,
+        color: selectedColor || undefined,
+        size: selectedSize || undefined,
+        name: product.name,
+        price: product.price,
+        image: product.images?.[0] || '/placeholder-image.jpg',
+        category: product.category || 'General'
+      };
+      
+      // Add to cart using the useCart hook (async)
+      await addToCart(cartItem);
+      
+      console.log(`${product.name} added to cart!`);
+      
+    } catch (error) {
+      console.error('Failed to add to cart:', error);
+      alert('Failed to add to cart. Please try again.');
+    }
   };
 
-  const handleBuyNow = () => {
-    handleAddToCart();
+  const handleBuyNow = async () => {
+    await handleAddToCart();
     navigate('/checkout');
   };
 

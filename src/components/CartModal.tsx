@@ -4,10 +4,15 @@ import { Trash2 } from "lucide-react";
 
 interface CartItem {
   id: string | number;
+  productId: string | number;
   name: string;
   price: number;
+  totalPrice: number;
   quantity: number;
   image?: string;
+  color?: string;
+  size?: string;
+  addedAt: string;
 }
 
 interface CartModalProps {
@@ -27,7 +32,7 @@ const CartModal: React.FC<CartModalProps> = ({
 }) => {
   const navigate = useNavigate();
   const subtotal = (items && Array.isArray(items)) ? items.reduce(
-    (sum, item) => sum + (isNaN(item.price) ? 0 : (item.price || 0) * (item.quantity || 0)),
+    (sum, item) => sum + (isNaN(item.totalPrice) ? 0 : (item.totalPrice || 0)),
     0,
   ) : 0;
   const shippingThreshold = 200;

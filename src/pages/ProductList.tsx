@@ -177,15 +177,20 @@ const ProductList: React.FC = () => {
                 <Heart className="w-4 h-4" />
               </button>
               <button
-                onClick={(e) => {
+                onClick={async (e) => {
                   e.preventDefault();
-                  addToCart({
-                    productId: String(product.id),
-                    name: product.name,
-                    price: product.price,
-                    image: product.images?.[0] || '',
-                    quantity: 1
-                  });
+                  try {
+                    await addToCart({
+                      productId: String(product.id),
+                      name: product.name,
+                      price: product.price,
+                      image: product.images?.[0] || '',
+                      quantity: 1
+                    });
+                    console.log(`${product.name} added to cart!`);
+                  } catch (error) {
+                    console.error('Failed to add to cart:', error);
+                  }
                 }}
                 className="p-2 text-gray-400 hover:text-blue-600 transition-colors"
               >
@@ -237,14 +242,19 @@ const ProductList: React.FC = () => {
                 <Heart className="w-4 h-4" />
               </button>
               <button
-                onClick={() => {
-                  addToCart({
-                    productId: String(product.id),
-                    name: product.name,
-                    price: product.price,
-                    image: product.images?.[0] || '',
-                    quantity: 1
-                  });
+                onClick={async () => {
+                  try {
+                    await addToCart({
+                      productId: String(product.id),
+                      name: product.name,
+                      price: product.price,
+                      image: product.images?.[0] || '',
+                      quantity: 1
+                    });
+                    console.log(`${product.name} added to cart!`);
+                  } catch (error) {
+                    console.error('Failed to add to cart:', error);
+                  }
                 }}
                 className="p-2 text-gray-400 hover:text-blue-600 transition-colors"
               >
