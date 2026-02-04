@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useWishlist } from '../contexts/WishlistContext';
 import { productService, type Product } from '../services/productService';
 import { ProductSkeleton } from './SkeletonLoader';
+import AddToCartButton from './AddToCartButton';
 
 interface FP { 
   id: string | number;
@@ -106,9 +107,15 @@ const FeaturedProducts: React.FC = () => {
                 </button>
                 <img src={p.image} alt={p.name} className="w-full h-48 object-cover" />
               </div>
-              <div className="p-4 cursor-pointer text-gray-900" onClick={() => navigate(`/products/${p.id}`)}>
+              <div className="p-4">
                 <p className="text-sm text-gray-500 mb-1">{p.category}</p>
-                <h3 className="font-medium text-gray-900 mb-2 line-clamp-2" title={p.name}>{p.name}</h3>
+                <h3 
+                  className="font-medium text-gray-900 mb-2 line-clamp-2 cursor-pointer hover:text-blue-600" 
+                  title={p.name}
+                  onClick={() => navigate(`/products/${p.id}`)}
+                >
+                  {p.name}
+                </h3>
                 <div className="flex items-center gap-2 mb-2">
                   <div className="flex items-center gap-1 bg-yellow-100 px-2 py-1 rounded text-sm">
                     <span className="text-yellow-500">★</span>
@@ -116,10 +123,32 @@ const FeaturedProducts: React.FC = () => {
                   </div>
                   <span className="text-sm text-gray-500">({p.reviews})</span>
                 </div>
-                <p className="font-bold text-gray-900">{p.price}</p>
-                {p.oldPrice && (
-                  <p className="text-sm text-gray-500 line-through">{p.oldPrice}</p>
-                )}
+                <div className="flex items-center justify-between mb-3">
+                  <div>
+                    <p className="font-bold text-gray-900">{p.price}</p>
+                    {p.oldPrice && (
+                      <p className="text-sm text-gray-500 line-through">{p.oldPrice}</p>
+                    )}
+                  </div>
+                </div>
+                <AddToCartButton 
+                  product={{
+                    id: p.id,
+                    name: p.name,
+                    price: parseFloat(p.price.replace('$', '')),
+                    category: p.category,
+                    images: [p.image],
+                    slug: '',
+                    sku: '',
+                    description: ''
+                  } as Product}
+                  size="sm"
+                  className="w-full"
+                  onCartOpen={() => {
+                    // Trigger cart modal open through global event
+                    window.dispatchEvent(new CustomEvent('openCartModal'));
+                  }}
+                />
               </div>
             </div>
           ))}

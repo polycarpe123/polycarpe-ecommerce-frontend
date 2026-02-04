@@ -58,6 +58,14 @@ export const cartService = {
     image?: string;
     category?: string;
   }): Promise<Cart> => {
+    console.log('addToCart called with item:', item);
+    
+    // For now, always use localStorage to isolate the issue
+    console.log('Using localStorage fallback for cart');
+    return cartService.addToLocalCart(item);
+    
+    // Original API code (commented out for debugging)
+    /*
     try {
       // Try to add to database cart
       const response = await api.post('/cart/items', item);
@@ -67,6 +75,7 @@ export const cartService = {
       console.log('Database cart update failed, using localStorage:', error.message);
       return cartService.addToLocalCart(item);
     }
+    */
   },
 
   // Update cart item quantity (database first, localStorage fallback)
@@ -188,7 +197,9 @@ export const cartService = {
     image?: string;
     category?: string;
   }): Cart => {
+    console.log('Adding to local cart:', item);
     const cart = cartService.getLocalCart();
+    console.log('Current cart before adding:', cart);
     
     // Check if item already exists
     const existingItemIndex = cart.items.findIndex(i => 
@@ -221,6 +232,7 @@ export const cartService = {
     // Recalculate totals
     cartService.recalculateLocalCartTotals(cart);
     cartService.saveLocalCart(cart);
+    console.log('Cart after adding:', cart);
     return cart;
   },
 
@@ -269,5 +281,13 @@ export const cartService = {
     cart.tax = cart.subtotal * 0.08; // 8% tax
     cart.shipping = cart.subtotal > 100 ? 0 : 10; // Free shipping over $100
     cart.total = cart.subtotal + cart.tax + cart.shipping - (cart.discount || 0);
+    
+    console.log('Cart totals calculated:', {
+      subtotal: cart.subtotal,
+      tax: cart.tax,
+      shipping: cart.shipping,
+      total: cart.total,
+      itemCount: cart.items.length
+    });
   }
 };

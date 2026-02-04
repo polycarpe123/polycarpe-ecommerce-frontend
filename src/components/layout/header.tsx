@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import CartModal from '../CartModal';
 import AuthModal from '../AuthModal';
@@ -6,6 +6,7 @@ import LogoutModal from '../LogoutModal';
 import SearchDropdown from '../SearchDropdown';
 import { useApp } from '../../contexts/AppContext';
 import { useWishlist } from '../../contexts/WishlistContext';
+import { useCart } from '../../contexts/CartContext';
 import { safeCurrency } from '../../utils/formatting';
 
 const Navigation: React.FC = () => {
@@ -17,16 +18,23 @@ const Navigation: React.FC = () => {
     const { 
         user, 
         isAuthenticated, 
-        logout, 
-        cart, 
-        getCartCount, 
-        getCartTotal 
+        logout
     } = useApp();
 
     const { wishlistCount } = useWishlist();
+    const { cart, itemCount: cartCount, total: cartTotal, updateCartItem, removeFromCart } = useCart();
 
-    const cartCount = getCartCount();
-    const cartTotal = getCartTotal();
+    // Listen for cart modal open events
+    useEffect(() => {
+        const handleOpenCartModal = () => {
+            console.log('Cart modal opening, cart data:', cart);
+            console.log('Cart items:', cart?.items);
+            setIsCartOpen(true);
+        };
+
+        window.addEventListener('openCartModal', handleOpenCartModal);
+        return () => window.removeEventListener('openCartModal', handleOpenCartModal);
+    }, []);
 
     const handleAuthClick = () => {
         if (isAuthenticated) {
@@ -45,12 +53,20 @@ const Navigation: React.FC = () => {
         setIsLogoutOpen(false);
     };
 
-    const handleUpdateQuantity = (_id: string | number, _quantity: number) => {
-        // TO DO: implement update quantity logic using useApp context
+    const handleUpdateQuantity = async (id: string | number, quantity: number) => {
+        try {
+            await updateCartItem(id, quantity);
+        } catch (error) {
+            console.error('Failed to update quantity:', error);
+        }
     };
 
-    const handleRemoveItem = (_id: string | number) => {
-        // TO DO: implement remove item logic using useApp context
+    const handleRemoveItem = async (id: string | number) => {
+        try {
+            await removeFromCart(id);
+        } catch (error) {
+            console.error('Failed to remove item:', error);
+        }
     };
 
     return (

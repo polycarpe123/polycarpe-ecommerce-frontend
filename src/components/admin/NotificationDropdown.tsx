@@ -24,6 +24,10 @@ const NotificationDropdown: React.FC<NotificationDropdownProps> = ({ className =
     return () => clearInterval(interval);
   }, []);
 
+  useEffect(() => {
+    fetchNotifications();
+  }, [filter, typeFilter]);
+
   const fetchNotifications = async () => {
     try {
       setLoading(true);
@@ -32,7 +36,7 @@ const NotificationDropdown: React.FC<NotificationDropdownProps> = ({ className =
         unreadOnly: filter === 'unread',
         type: typeFilter !== 'all' ? typeFilter : undefined
       });
-      setNotifications(response.notifications);
+      setNotifications(response.data);
     } catch (error) {
       console.error('Error fetching notifications:', error);
     } finally {
@@ -102,7 +106,7 @@ const NotificationDropdown: React.FC<NotificationDropdownProps> = ({ className =
         return '📦';
       case 'category':
         return '📁';
-      case 'customer':
+      case 'user':
         return '👤';
       case 'order':
         return '🛒';
@@ -194,7 +198,7 @@ const NotificationDropdown: React.FC<NotificationDropdownProps> = ({ className =
                   <option value="all">All Types</option>
                   <option value="product">Products</option>
                   <option value="category">Categories</option>
-                  <option value="customer">Customers</option>
+                  <option value="user">Customers</option>
                   <option value="order">Orders</option>
                   <option value="system">System</option>
                 </select>
@@ -241,7 +245,7 @@ const NotificationDropdown: React.FC<NotificationDropdownProps> = ({ className =
                                 {notification.message}
                               </p>
                               <p className="text-xs text-gray-400 mt-1">
-                                {formatTimeAgo(notification.createdAt)}
+                                {formatTimeAgo(notification.timestamp)}
                               </p>
                             </div>
                             <div className="flex items-center gap-1">

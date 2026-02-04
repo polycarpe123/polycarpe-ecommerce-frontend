@@ -99,7 +99,12 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
     try {
       dispatch({ type: 'SET_LOADING', payload: true });
       const updatedCart = await cartService.addToCart(item);
+      console.log('Cart updated in context:', updatedCart);
       dispatch({ type: 'SET_CART', payload: updatedCart });
+      
+      // Trigger custom event for other components
+      window.dispatchEvent(new CustomEvent('cartUpdated', { detail: updatedCart }));
+      
     } catch (error) {
       console.error('Error adding to cart:', error);
       dispatch({ type: 'SET_ERROR', payload: 'Failed to add item to cart' });
@@ -112,6 +117,10 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
       dispatch({ type: 'SET_LOADING', payload: true });
       const updatedCart = await cartService.updateCartItem(itemId, quantity);
       dispatch({ type: 'SET_CART', payload: updatedCart });
+      
+      // Trigger custom event for other components
+      window.dispatchEvent(new CustomEvent('cartUpdated', { detail: updatedCart }));
+      
     } catch (error) {
       console.error('Error updating cart item:', error);
       dispatch({ type: 'SET_ERROR', payload: 'Failed to update cart item' });
@@ -124,6 +133,10 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
       dispatch({ type: 'SET_LOADING', payload: true });
       const updatedCart = await cartService.removeFromCart(itemId);
       dispatch({ type: 'SET_CART', payload: updatedCart });
+      
+      // Trigger custom event for other components
+      window.dispatchEvent(new CustomEvent('cartUpdated', { detail: updatedCart }));
+      
     } catch (error) {
       console.error('Error removing from cart:', error);
       dispatch({ type: 'SET_ERROR', payload: 'Failed to remove item from cart' });
@@ -166,6 +179,15 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
     : 0;
   const subtotal = state.cart?.subtotal || 0;
   const total = state.cart?.total || 0;
+
+  // Debug logging
+  console.log('CartContext state:', {
+    itemCount,
+    subtotal,
+    total,
+    cartItems: state.cart?.items?.length || 0,
+    cart: state.cart
+  });
 
   const value: CartContextType = {
     cart: state.cart,

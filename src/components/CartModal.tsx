@@ -31,10 +31,15 @@ const CartModal: React.FC<CartModalProps> = ({
   onRemoveItem,
 }) => {
   const navigate = useNavigate();
-  const subtotal = (items && Array.isArray(items)) ? items.reduce(
-    (sum, item) => sum + (isNaN(item.totalPrice) ? 0 : (item.totalPrice || 0)),
-    0,
-  ) : 0;
+
+  // Debug logging
+  console.log('CartModal render:', { isOpen, itemsCount: items.length, items });
+
+  const calculateSubtotal = () => {
+    return items.reduce((sum, item) => sum + (item.totalPrice || 0), 0);
+  };
+
+  const subtotal = (items && Array.isArray(items)) ? calculateSubtotal() : 0;
   const shippingThreshold = 200;
   const progressPercentage = (subtotal / shippingThreshold) * 100;
   const remainingForFreeShipping = Math.max(0, shippingThreshold - subtotal);

@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Heart, Star, Share2, Truck, RefreshCw, Shield } from 'lucide-react';
 import { productService, type Product } from '../services/productService';
-import { useCart } from '../hooks/useCart';
+import { useCart } from '../contexts/CartContext';
+import AddToCartButton from '../components/AddToCartButton';
 
 const ProductDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -331,13 +332,16 @@ const ProductDetail: React.FC = () => {
 
             {/* Action Buttons */}
             <div className="flex space-x-4">
-              <button
-                onClick={handleAddToCart}
-                disabled={!isInStock()}
-                className="flex-1 bg-blue-600 text-white py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
-              >
-                Add to Cart
-              </button>
+              <AddToCartButton
+                product={product}
+                quantity={quantity}
+                className="flex-1"
+                showQuantity={false}
+                onCartOpen={() => {
+                  // Trigger cart modal open through global event
+                  window.dispatchEvent(new CustomEvent('openCartModal'));
+                }}
+              />
               <button
                 onClick={handleBuyNow}
                 disabled={!isInStock()}
