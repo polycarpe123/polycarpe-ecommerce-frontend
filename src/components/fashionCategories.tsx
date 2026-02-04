@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { categoryService, type Category } from '../services/categoryService';
-import { productService, type Product } from '../services/productService';
+import { productService } from '../services/productService';
 import { FashionCardSkeleton } from './SkeletonLoader';
 
 interface Banner {
@@ -11,39 +11,65 @@ interface Banner {
   title: string;
 }
 
+interface CategoryWithCount extends Category {
+  productCount: number;
+}
+
 const FashionCategories: React.FC = () => {
   const navigate = useNavigate();
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [products, setProducts] = useState<Product[]>([]);
+  const [categories, setCategories] = useState<CategoryWithCount[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    loadData();
+    loadCategoriesWithCounts();
   }, []);
 
-  const loadData = async () => {
+  const loadCategoriesWithCounts = async () => {
     try {
       setLoading(true);
       
       // Load categories and products in parallel
       const [categoriesData, productsData] = await Promise.all([
         categoryService.getCategories(),
-        productService.getProducts({ limit: 6 })
+        productService.getProducts({ limit: 1000 }) // Get all products to count
       ]);
 
       // Ensure categories is always an array
       const categoriesArray = Array.isArray(categoriesData) ? categoriesData : [];
-      setCategories(categoriesArray);
       
       // Ensure products is always an array
       const productsArray = Array.isArray(productsData.products) ? productsData.products : [];
-      setProducts(productsArray);
+      
+      // Count products per category
+      const categoriesWithCounts = categoriesArray.map((category: Category) => {
+        const productCount = productsArray.filter((product: any) => {
+          const productCategory = product.category || '';
+          const productCategoryId = product.categoryId || '';
+          
+          return productCategory === category.name || 
+                 (typeof productCategoryId === 'object' && productCategoryId?.name === category.name) ||
+                 productCategoryId === category.id ||
+                 productCategoryId === category.name;
+        }).length;
+        
+        return {
+          ...category,
+          productCount
+        };
+      });
+      
+      setCategories(categoriesWithCounts);
       
     } catch (error) {
       console.error('Error loading data:', error);
-      // Fallback to empty arrays
-      setCategories([]);
-      setProducts([]);
+      // Fallback to sample categories with counts
+      setCategories([
+        { id: 1, name: 'Dresses', slug: 'dresses', image: 'https://picsum.photos/200/200?random=301', productCount: 24 },
+        { id: 2, name: 'Tops', slug: 'tops', image: 'https://picsum.photos/200/200?random=302', productCount: 45 },
+        { id: 3, name: 'Bottoms', slug: 'bottoms', image: 'https://picsum.photos/200/200?random=303', productCount: 32 },
+        { id: 4, name: 'Outerwear', slug: 'outerwear', image: 'https://picsum.photos/200/200?random=304', productCount: 18 },
+        { id: 5, name: 'Accessories', slug: 'accessories', image: 'https://picsum.photos/200/200?random=305', productCount: 56 }
+      ]);
     } finally {
       setLoading(false);
     }
@@ -51,10 +77,6 @@ const FashionCategories: React.FC = () => {
 
   const handleCategoryClick = (categoryName: string) => {
     navigate(`/product-category/${categoryName.toLowerCase()}`);
-  };
-
-  const handleProductClick = (productId: number) => {
-    navigate(`/products/${productId}`);
   };
 
   // Default banner data
@@ -65,7 +87,7 @@ const FashionCategories: React.FC = () => {
       "https://picsum.photos/1200/600?random=205",
     ],
     eyebrow: "FASHION COLLECTION",
-    title: "NEW ARRIVALS",
+    title: "SHOP BY CATEGORY",
   };
 
   if (loading) {
@@ -159,60 +181,54 @@ const FashionCategories: React.FC = () => {
             </div>
           </div>
 
-          {/* Column 3: Product Grid */}
+          {/* Column 3: Category Grid */}
           <div className="lg:col-span-5">
             <div className="grid grid-cols-2 gap-4">
-              {Array.isArray(products) && products.length > 0 ? (
-                products.map((product) => (
+              {Array.isArray(categories) && categories.length > 0 ? (
+                categories.map((category) => (
                   <div
-                    key={product.id}
-                    className="group cursor-pointer"
-                    onClick={() => handleProductClick(Number(product.id))}
+                    key={category.id}
+                    className="group cursor-pointer bg-white rounded-lg shadow-sm overflow-hidden hover:shadow-lg transition-all duration-300"
+                    onClick={() => handleCategoryClick(category.name)}
                   >
-                    <div className="relative overflow-hidden rounded-lg mb-3">
-                      {product.oldPrice && product.oldPrice > product.price && (
-                        <div className="absolute top-2 left-2 bg-red-500 text-white px-2 py-1 rounded text-xs font-medium z-10">
-                          {Math.round(((product.oldPrice - product.price) / product.oldPrice) * 100)}% OFF
-                        </div>
-                      )}
+                    <div className="relative overflow-hidden">
                       <img
-                        src={product.images?.[0] || 'https://picsum.photos/300/300?random=' + product.id}
-                        alt={product.name}
-                        className="w-full h-48 object-cover transition-transform duration-300 group-hover:scale-105"
+                        src={category.image || `https://picsum.photos/200/200?random=${category.id}`}
+                        alt={category.name}
+                        className="w-full h-32 object-cover transition-transform duration-300 group-hover:scale-105"
                       />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                     </div>
-                    <h4 className="font-medium text-gray-900 mb-1 text-sm line-clamp-1">{product.name}</h4>
-                    <div className="flex items-center justify-between">
-                      <span className="text-orange-600 font-bold">${product.price}</span>
-                      {product.oldPrice && (
-                        <span className="text-gray-400 line-through text-sm">${product.oldPrice}</span>
-                      )}
+                    <div className="p-3">
+                      <h4 className="font-medium text-gray-900 mb-1 text-sm">{category.name}</h4>
+                      <p className="text-xs text-gray-500">{category.productCount} items</p>
                     </div>
                   </div>
                 ))
               ) : (
-                // Fallback products
+                // Fallback categories
                 [
-                  { id: 21, name: "Floral Midi Summer Dress", price: 58.00, image: "https://picsum.photos/300/300?random=140" },
-                  { id: 22, name: "Beige Trench Coat", price: 129.00, image: "https://picsum.photos/300/300?random=141" },
-                  { id: 23, name: "Classic Leather Tote", price: 95.00, image: "https://picsum.photos/300/300?random=142" },
-                  { id: 24, name: "White Button-Up Shirt", price: 42.00, image: "https://picsum.photos/300/300?random=143" },
-                ].map((product) => (
+                  { id: 1, name: 'Dresses', slug: 'dresses', image: 'https://picsum.photos/200/200?random=301', productCount: 24 },
+                  { id: 2, name: 'Tops', slug: 'tops', image: 'https://picsum.photos/200/200?random=302', productCount: 45 },
+                  { id: 3, name: 'Bottoms', slug: 'bottoms', image: 'https://picsum.photos/200/200?random=303', productCount: 32 },
+                  { id: 4, name: 'Outerwear', slug: 'outerwear', image: 'https://picsum.photos/200/200?random=304', productCount: 18 },
+                ].map((category) => (
                   <div
-                    key={product.id}
-                    className="group cursor-pointer"
-                    onClick={() => handleProductClick(product.id)}
+                    key={category.id}
+                    className="group cursor-pointer bg-white rounded-lg shadow-sm overflow-hidden hover:shadow-lg transition-all duration-300"
+                    onClick={() => handleCategoryClick(category.name)}
                   >
-                    <div className="relative overflow-hidden rounded-lg mb-3">
+                    <div className="relative overflow-hidden">
                       <img
-                        src={product.image}
-                        alt={product.name}
-                        className="w-full h-48 object-cover transition-transform duration-300 group-hover:scale-105"
+                        src={category.image}
+                        alt={category.name}
+                        className="w-full h-32 object-cover transition-transform duration-300 group-hover:scale-105"
                       />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                     </div>
-                    <h4 className="font-medium text-gray-900 mb-1 text-sm line-clamp-1">{product.name}</h4>
-                    <div className="flex items-center justify-between">
-                      <span className="text-orange-600 font-bold">${product.price}</span>
+                    <div className="p-3">
+                      <h4 className="font-medium text-gray-900 mb-1 text-sm">{category.name}</h4>
+                      <p className="text-xs text-gray-500">{category.productCount} items</p>
                     </div>
                   </div>
                 ))

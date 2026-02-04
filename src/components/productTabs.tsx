@@ -4,7 +4,7 @@ import { productService, type Product } from '../services/productService';
 import { TabSkeleton } from './SkeletonLoader';
 
 interface TabProduct {
-  id: number;
+  id: string | number;
   name: string;
   price: string;
   oldPrice?: string;
@@ -35,7 +35,7 @@ const ProductTabs: React.FC = () => {
       // Load recent products
       const recentResponse = await productService.getProducts({ limit: 8, sortBy: 'createdAt', sortOrder: 'desc' });
       const recentProducts = recentResponse.products.map((product: Product): TabProduct => ({
-        id: Number(product.id),
+        id: typeof product.id === 'string' ? product.id : String(product.id),
         name: product.name,
         price: `$${product.price}`,
         oldPrice: product.oldPrice ? `$${product.oldPrice}` : undefined,
@@ -47,7 +47,7 @@ const ProductTabs: React.FC = () => {
       // Load featured products
       const featuredResponse = await productService.getProducts({ featured: true, limit: 8 });
       const featuredProducts = featuredResponse.products.map((product: Product): TabProduct => ({
-        id: Number(product.id),
+        id: typeof product.id === 'string' ? product.id : String(product.id),
         name: product.name,
         price: `$${product.price}`,
         oldPrice: product.oldPrice ? `$${product.oldPrice}` : undefined,
@@ -61,7 +61,7 @@ const ProductTabs: React.FC = () => {
       const onSaleProducts = onSaleResponse.products
         .filter((product: Product) => product.oldPrice && product.oldPrice > product.price)
         .map((product: Product): TabProduct => ({
-          id: Number(product.id),
+          id: typeof product.id === 'string' ? product.id : String(product.id),
           name: product.name,
           price: `$${product.price}`,
           oldPrice: product.oldPrice ? `$${product.oldPrice}` : undefined,
@@ -75,7 +75,7 @@ const ProductTabs: React.FC = () => {
       const topRatedProducts = topRatedResponse.products
         .filter((product: Product) => product.rating && product.rating >= 4)
         .map((product: Product): TabProduct => ({
-          id: Number(product.id),
+          id: typeof product.id === 'string' ? product.id : String(product.id),
           name: product.name,
           price: `$${product.price}`,
           oldPrice: product.oldPrice ? `$${product.oldPrice}` : undefined,

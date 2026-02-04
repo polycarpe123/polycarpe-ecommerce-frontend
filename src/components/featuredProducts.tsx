@@ -5,7 +5,7 @@ import { productService, type Product } from '../services/productService';
 import { ProductSkeleton } from './SkeletonLoader';
 
 interface FP { 
-  id: number;
+  id: string | number;
   name: string;
   category: string;
   price: string;
@@ -30,7 +30,7 @@ const FeaturedProducts: React.FC = () => {
     try {
       const response = await productService.getProducts({ featured: true, limit: 8 });
       const featuredProducts = response.products.map((product: Product): FP => ({
-        id: Number(product.id),
+        id: typeof product.id === 'string' ? product.id : String(product.id), // Keep as string
         name: product.name,
         category: product.category || 'Uncategorized',
         price: `$${product.price}`,
@@ -51,11 +51,12 @@ const FeaturedProducts: React.FC = () => {
   };
 
   const toggle = (product: FP) => {
-    if (isInWishlist(product.id)) {
-      removeFromWishlist(product.id);
+    const productId = typeof product.id === 'string' ? product.id : Number(product.id);
+    if (isInWishlist(productId)) {
+      removeFromWishlist(productId);
     } else {
       addToWishlist({
-        id: product.id,
+        id: productId,
         name: product.name,
         price: product.price,
         image: product.image,
@@ -99,7 +100,7 @@ const FeaturedProducts: React.FC = () => {
                   aria-label="Wishlist"
                   className="absolute top-2 right-2 p-2 bg-white/80 rounded-full hover:bg-white z-10"
                 >
-                  <span className={`text-lg ${isInWishlist(p.id) ? 'text-red-500' : 'text-gray-400'}`}>
+                  <span className={`text-lg ${isInWishlist(typeof p.id === 'string' ? Number(p.id) : p.id) ? 'text-red-500' : 'text-gray-400'}`}>
                     ♥
                   </span>
                 </button>

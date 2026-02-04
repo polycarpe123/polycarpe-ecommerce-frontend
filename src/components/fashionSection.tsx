@@ -5,7 +5,7 @@ import { categoryService, type Category } from '../services/categoryService';
 import { ProductSkeleton } from './SkeletonLoader';
 
 interface FashionProduct {
-  id: number;
+  id: string | number;
   name: string;
   price: string;
   percentOff?: number;
@@ -69,7 +69,7 @@ const FashionShowcase: React.FC<FashionShowcaseProps> = ({
 
       const response = await productService.getProducts(filters);
       const fashionProducts = response.products.map((product: Product): FashionProduct => ({
-        id: Number(product.id),
+        id: typeof product.id === 'string' ? product.id : String(product.id),
         name: product.name,
         price: `$${product.price}`,
         percentOff: product.oldPrice ? Math.round(((product.oldPrice - product.price) / product.oldPrice) * 100) : undefined,
