@@ -57,12 +57,12 @@ const CategoryPage: React.FC = () => {
       // Match category by name or ID
       const categoryMatch = 
         product.category?.toLowerCase() === categoryName.toLowerCase() ||
-        (typeof product.categoryId === 'object' && product.categoryId?.name?.toLowerCase() === categoryName.toLowerCase()) ||
+        (typeof product.categoryId === 'object' && (product.categoryId as any)?.name?.toLowerCase() === categoryName.toLowerCase()) ||
         product.categoryId === categoryName;
       
       const subcategoryMatch = !selectedSubcategory || 
         product.subcategory === selectedSubcategory ||
-        (typeof product.subcategoryId === 'object' && product.subcategoryId?.name === selectedSubcategory);
+        (typeof product.subcategoryId === 'object' && (product.subcategoryId as any)?.name === selectedSubcategory);
       
       const colorMatch = !selectedColor || 
         (product.colors && product.colors.some((color: any) => 
@@ -93,7 +93,7 @@ const CategoryPage: React.FC = () => {
   const subcategories = useMemo(() => {
     const subcatMap = new Map<string, number>();
     filteredProducts.forEach(product => {
-      const subcatName = product.subcategory || (typeof product.subcategoryId === 'object' ? product.subcategoryId?.name : '');
+      const subcatName = product.subcategory || (typeof product.subcategoryId === 'object' ? (product.subcategoryId as any)?.name : '');
       if (subcatName) {
         subcatMap.set(subcatName, (subcatMap.get(subcatName) || 0) + 1);
       }

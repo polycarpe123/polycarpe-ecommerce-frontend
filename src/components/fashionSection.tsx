@@ -147,7 +147,7 @@ const FashionShowcase: React.FC<FashionShowcaseProps> = ({
     }
   };
 
-  const handleProductClick = (productId: number) => {
+  const handleProductClick = (productId: string | number) => {
     navigate(`/products/${productId}`);
   };
 

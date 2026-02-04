@@ -51,7 +51,7 @@ const FeaturedProducts: React.FC = () => {
   };
 
   const toggle = (product: FP) => {
-    const productId = typeof product.id === 'string' ? product.id : Number(product.id);
+    const productId = typeof product.id === 'string' ? Number(product.id) : product.id;
     if (isInWishlist(productId)) {
       removeFromWishlist(productId);
     } else {
