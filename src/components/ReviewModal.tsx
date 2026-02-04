@@ -16,7 +16,6 @@ interface ReviewModalProps {
 const ReviewModal: React.FC<ReviewModalProps> = ({
   isOpen,
   onClose,
-  productId,
   productName,
   onSubmitReview,
 }) => {
