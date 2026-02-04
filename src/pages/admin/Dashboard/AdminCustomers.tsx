@@ -62,8 +62,8 @@ const AdminCustomers: React.FC = () => {
           return;
         }
         
-        // Type assertion to handle the additional fields from backend
-        const customersList = customersData.customers as Customer[] || [];
+        // Handle both response formats: { customers: [...] } or { data: [...] }
+        let customersList: any[] = (customersData as any).customers || (customersData as any).data || [];
         console.log('👥 Customers list:', customersList);
         console.log('👥 Customers list type:', typeof customersList);
         console.log('👥 Is array?', Array.isArray(customersList));
@@ -72,14 +72,95 @@ const AdminCustomers: React.FC = () => {
         const validCustomers = customersList.filter(customer => {
           console.log('🔍 Checking customer:', customer);
           return customer && typeof customer === 'object';
-        });
+        }) as Customer[];
         
         console.log('✅ Valid customers:', validCustomers.length);
         
-        // If no customers from database, show a helpful message
+        // If no customers from database, show a helpful message or add mock data
         if (validCustomers.length === 0) {
           console.log('⚠️ No customers found in database');
-          setError('No customers found. Customers will appear here when they register or place orders.');
+          
+          // Add some mock customers with orders for demonstration
+          const mockCustomers: Customer[] = [
+            {
+              id: 'mock1',
+              firstName: 'John',
+              lastName: 'Doe',
+              email: 'john.doe@example.com',
+              phone: '+1234567890',
+              addresses: [],
+              createdAt: new Date('2024-01-15').toISOString(),
+              updatedAt: new Date('2024-01-15').toISOString(),
+              lastLoginAt: new Date('2024-02-01').toISOString(),
+              isActive: true,
+              isGuest: false,
+              preferences: {
+                newsletter: true,
+                marketingEmails: true,
+                smsNotifications: false,
+                language: 'en',
+                currency: 'USD'
+              },
+              totalOrders: 3,
+              totalSpent: 258.97,
+              lastOrderDate: new Date('2024-02-01').toISOString(),
+              orders: [
+                {
+                  id: 'order1',
+                  orderNumber: 'ORD-2024-001',
+                  status: 'completed',
+                  total: 89.99,
+                  createdAt: new Date('2024-02-01').toISOString(),
+                  itemCount: 2
+                },
+                {
+                  id: 'order2',
+                  orderNumber: 'ORD-2024-002',
+                  status: 'processing',
+                  total: 125.50,
+                  createdAt: new Date('2024-01-28').toISOString(),
+                  itemCount: 3
+                }
+              ]
+            },
+            {
+              id: 'mock2',
+              firstName: 'Jane',
+              lastName: 'Smith',
+              email: 'jane.smith@example.com',
+              phone: '+0987654321',
+              addresses: [],
+              createdAt: new Date('2024-01-20').toISOString(),
+              updatedAt: new Date('2024-01-20').toISOString(),
+              lastLoginAt: new Date('2024-01-31').toISOString(),
+              isActive: true,
+              isGuest: false,
+              preferences: {
+                newsletter: false,
+                marketingEmails: true,
+                smsNotifications: true,
+                language: 'en',
+                currency: 'USD'
+              },
+              totalOrders: 1,
+              totalSpent: 43.48,
+              lastOrderDate: new Date('2024-01-31').toISOString(),
+              orders: [
+                {
+                  id: 'order3',
+                  orderNumber: 'ORD-2024-003',
+                  status: 'pending',
+                  total: 43.48,
+                  createdAt: new Date('2024-01-31').toISOString(),
+                  itemCount: 1
+                }
+              ]
+            }
+          ];
+          
+          console.log('🎭 Using mock customers for demonstration');
+          setCustomers(mockCustomers);
+          setError('Showing demo customers. Real customers will appear when they register and place orders.');
         } else {
           setCustomers(validCustomers);
         }

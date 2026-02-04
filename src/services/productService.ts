@@ -39,6 +39,7 @@ interface BackendProduct {
 
 export interface Product {
   id: string | number;
+  _id?: string; // MongoDB _id field
   name: string;
   slug: string;
   sku: string;
@@ -305,11 +306,48 @@ export const productService = {
   // Create new product
   createProduct: async (product: Partial<Product>): Promise<Product> => {
     try {
+      console.log('Sending product creation request:', product);
       const response = await api.post('/products', product);
+      console.log('Product creation response:', response.data);
+      
+      // Handle backend response format: { success: true, data: {...} }
+      if (response.data.success && response.data.data) {
+        const createdProduct = response.data.data;
+        console.log('Product created successfully:', createdProduct);
+        return createdProduct;
+      }
+      
+      // Handle direct response format
+      if (response.data.id || response.data._id) {
+        console.log('Product created successfully (direct format):', response.data);
+        return response.data;
+      }
+      
+      console.warn('Unexpected response format:', response.data);
       return response.data;
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error creating product in database:', error);
-      // Fallback to localStorage for guest users
+      console.error('Error response:', error.response?.data);
+      console.error('Error status:', error.response?.status);
+      console.error('Error headers:', error.response?.headers);
+      
+      // Don't fallback to localStorage for authenticated users - show the actual error
+      if (localStorage.getItem('authToken')) {
+        // Extract the actual error message from backend
+        const errorMessage = error.response?.data?.error || 
+                           error.response?.data?.message || 
+                           error.message || 
+                           'Unknown error occurred';
+        
+        console.error('Extracted error message:', errorMessage);
+        
+        // Create a more descriptive error
+        const enhancedError = new Error(errorMessage);
+        (enhancedError as any).response = error.response;
+        throw enhancedError;
+      }
+      
+      // Fallback to localStorage for guest users only
       const products = JSON.parse(localStorage.getItem('products') || '[]');
       
       // Generate new ID (max existing ID + 1)

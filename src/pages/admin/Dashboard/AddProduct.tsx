@@ -23,10 +23,10 @@ const AddProduct: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [categories, setCategories] = useState<any[]>([
-    { id: 1, name: 'Electronics' },
-    { id: 2, name: 'Clothing' },
-    { id: 3, name: 'Sports & Fitness' },
-    { id: 4, name: 'Accessories' }
+    { id: '507f1f77bcf86cd799439011', name: 'Electronics' }, // Mock MongoDB ObjectId
+    { id: '507f1f77bcf86cd799439012', name: 'Clothing' },
+    { id: '507f1f77bcf86cd799439013', name: 'Sports & Fitness' },
+    { id: '507f1f77bcf86cd799439014', name: 'Accessories' }
   ]);
   const [formData, setFormData] = useState<ProductFormData>({
     name: '',
@@ -64,10 +64,10 @@ const AddProduct: React.FC = () => {
       if (categoriesArray.length === 0) {
         // If API returns empty array, use sample categories
         const sampleCategories = [
-          { id: 1, name: 'Electronics' },
-          { id: 2, name: 'Clothing' },
-          { id: 3, name: 'Sports & Fitness' },
-          { id: 4, name: 'Accessories' }
+          { id: '507f1f77bcf86cd799439011', name: 'Electronics' }, // Mock MongoDB ObjectId
+          { id: '507f1f77bcf86cd799439012', name: 'Clothing' },
+          { id: '507f1f77bcf86cd799439013', name: 'Sports & Fitness' },
+          { id: '507f1f77bcf86cd799439014', name: 'Accessories' }
         ];
         setCategories(sampleCategories);
       } else {
@@ -77,10 +77,10 @@ const AddProduct: React.FC = () => {
       console.error('Error loading categories:', error);
       // Fallback to sample categories if API fails
       const sampleCategories = [
-        { id: 1, name: 'Electronics' },
-        { id: 2, name: 'Clothing' },
-        { id: 3, name: 'Sports & Fitness' },
-        { id: 4, name: 'Accessories' }
+        { id: '507f1f77bcf86cd799439011', name: 'Electronics' }, // Mock MongoDB ObjectId
+        { id: '507f1f77bcf86cd799439012', name: 'Clothing' },
+        { id: '507f1f77bcf86cd799439013', name: 'Sports & Fitness' },
+        { id: '507f1f77bcf86cd799439014', name: 'Accessories' }
       ];
       setCategories(sampleCategories);
     }
@@ -130,6 +130,14 @@ const AddProduct: React.FC = () => {
     setLoading(true);
     setError(null);
 
+    // Check if user is authenticated
+    const token = localStorage.getItem('authToken');
+    if (!token) {
+      setError('You must be logged in to create a product. Please login first.');
+      setLoading(false);
+      return;
+    }
+
     // Validate required fields
     if (!formData.name.trim()) {
       setError('Product name is required');
@@ -165,28 +173,50 @@ const AddProduct: React.FC = () => {
       // Filter out empty image URLs
       const validImages = formData.images.filter(img => img.trim() !== '');
       
+      // Map frontend data to backend expected format
       const productData = {
-        ...formData,
-        images: validImages,
+        name: formData.name,
         price: Number(formData.price),
         oldPrice: formData.oldPrice ? Number(formData.oldPrice) : undefined,
-        stock: Number(formData.stock)
+        description: formData.description,
+        sku: formData.sku,
+        categoryId: formData.category, // This should be a valid MongoDB ObjectId
+        inStock: formData.status === 'active', // Convert status to boolean
+        quantity: Number(formData.stock), // Rename stock to quantity
+        featured: formData.featured,
+        images: validImages,
+        tags: formData.tags,
+        status: formData.status
       };
 
       console.log('Creating product with data:', productData);
+      console.log('Using token:', token ? 'Token exists' : 'No token');
+      console.log('Full request payload:', JSON.stringify(productData, null, 2));
+      
       const result = await productService.createProduct(productData);
       console.log('Product creation result:', result);
       
       // Check if product was actually created (has valid ID)
-      if (result && result.id) {
-        console.log('Product created successfully with ID:', result.id);
+      if (result && (result.id || result._id)) {
+        console.log('Product created successfully with ID:', result.id || result._id);
+        alert('Product created successfully!');
         navigate('/admin/products');
       } else {
         throw new Error('Product creation failed - no valid ID returned');
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error creating product:', error);
-      setError('Failed to create product. Please try again.');
+      
+      // Better error messages
+      if (error.response?.status === 401) {
+        setError('Authentication failed. Please login again.');
+      } else if (error.response?.status === 403) {
+        setError('You do not have permission to create products. Admin or Vendor role required.');
+      } else if (error.response?.status === 400) {
+        setError('Invalid product data. Please check all fields.');
+      } else {
+        setError(`Failed to create product: ${error.message || 'Unknown error'}`);
+      }
     } finally {
       setLoading(false);
     }
@@ -278,7 +308,7 @@ const AddProduct: React.FC = () => {
                 >
                   <option value="">Select a category</option>
                   {categories.map(cat => (
-                    <option key={cat.id} value={cat.name}>{cat.name}</option>
+                    <option key={cat.id} value={cat.id}>{cat.name}</option>
                   ))}
                 </select>
               </div>

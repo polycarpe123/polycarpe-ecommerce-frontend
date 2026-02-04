@@ -62,9 +62,9 @@ export const cartService = {
       // Try to add to database cart
       const response = await api.post('/cart/items', item);
       return response.data;
-    } catch {
-      // Fallback to localStorage
-      console.log('Database cart update failed, using localStorage');
+    } catch (error: any) {
+      // Fallback to localStorage for any error (including 404)
+      console.log('Database cart update failed, using localStorage:', error.message);
       return cartService.addToLocalCart(item);
     }
   },
@@ -75,24 +75,29 @@ export const cartService = {
       // Try to update database cart
       const response = await api.put(`/cart/items/${itemId}`, { quantity });
       return response.data;
-    } catch {
+    } catch (error: any) {
       // Fallback to localStorage
-      console.log('Database cart update failed, using localStorage');
+      console.log('Database cart update failed, using localStorage:', error.message);
       return cartService.updateLocalCartItem(itemId, quantity);
     }
   },
 
   // Remove item from cart (database first, localStorage fallback)
-  removeFromCart: async (itemId: string | number): Promise<Cart> => {
+  removeCartItem: async (itemId: string | number): Promise<Cart> => {
     try {
       // Try to remove from database cart
       const response = await api.delete(`/cart/items/${itemId}`);
       return response.data;
-    } catch {
+    } catch (error: any) {
       // Fallback to localStorage
-      console.log('Database cart update failed, using localStorage');
+      console.log('Database cart update failed, using localStorage:', error.message);
       return cartService.removeFromLocalCart(itemId);
     }
+  },
+
+  // Alias for removeCartItem to match the interface used in CartContext
+  removeFromCart: async (itemId: string | number): Promise<Cart> => {
+    return cartService.removeCartItem(itemId);
   },
 
   // Clear cart (database first, localStorage fallback)
@@ -101,9 +106,9 @@ export const cartService = {
       // Try to clear database cart
       const response = await api.delete('/cart');
       return response.data;
-    } catch {
+    } catch (error: any) {
       // Fallback to localStorage
-      console.log('Database cart clear failed, using localStorage');
+      console.log('Database cart clear failed, using localStorage:', error.message);
       return cartService.clearLocalCart();
     }
   },
