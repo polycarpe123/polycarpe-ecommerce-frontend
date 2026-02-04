@@ -6,13 +6,12 @@ import {
   Grid, 
   List, 
   Heart, 
-  ShoppingCart, 
   Star,
   Package
 } from 'lucide-react';
 import { productService, type Product } from '../services/productService';
 import { categoryService, type Category } from '../services/categoryService';
-import { useCart } from '../contexts/CartContext';
+import AddToCartButton from '../components/AddToCartButton';
 
 interface ProductListState {
   products: Product[];
@@ -38,7 +37,6 @@ interface Filters {
 }
 
 const ProductList: React.FC = () => {
-  const { addToCart } = useCart();
   
   const [state, setState] = useState<ProductListState>({
     products: [],
@@ -145,9 +143,12 @@ const ProductList: React.FC = () => {
             </div>
           )}
           <img
-            src={product.images?.[0] || 'https://via.placeholder.com/300x300'}
+            src={product.images && product.images.length > 0 ? product.images[0] : 'https://picsum.photos/300/300?random=' + product.id}
             alt={product.name}
             className="w-full h-48 object-cover"
+            onError={(e) => {
+              e.currentTarget.src = 'https://picsum.photos/300/300?random=' + product.id;
+            }}
           />
         </div>
         <div className="p-4">
@@ -176,26 +177,15 @@ const ProductList: React.FC = () => {
               >
                 <Heart className="w-4 h-4" />
               </button>
-              <button
-                onClick={async (e) => {
-                  e.preventDefault();
-                  try {
-                    await addToCart({
-                      productId: String(product.id),
-                      name: product.name,
-                      price: product.price,
-                      image: product.images?.[0] || '',
-                      quantity: 1
-                    });
-                    console.log(`${product.name} added to cart!`);
-                  } catch (error) {
-                    console.error('Failed to add to cart:', error);
-                  }
+              <AddToCartButton
+                product={product}
+                quantity={1}
+                size="sm"
+                variant="secondary"
+                onCartOpen={() => {
+                  // Optional: Open cart modal after adding
                 }}
-                className="p-2 text-gray-400 hover:text-blue-600 transition-colors"
-              >
-                <ShoppingCart className="w-4 h-4" />
-              </button>
+              />
             </div>
           </div>
         </div>
@@ -208,9 +198,12 @@ const ProductList: React.FC = () => {
       <div className="flex gap-6">
         <Link to={`/products/${product.id}`} className="flex-shrink-0">
           <img
-            src={product.images?.[0] || 'https://via.placeholder.com/120x120'}
+            src={product.images && product.images.length > 0 ? product.images[0] : 'https://picsum.photos/120/120?random=' + product.id}
             alt={product.name}
             className="w-24 h-24 object-cover rounded-lg"
+            onError={(e) => {
+              e.currentTarget.src = 'https://picsum.photos/120/120?random=' + product.id;
+            }}
           />
         </Link>
         <div className="flex-1">
@@ -241,25 +234,15 @@ const ProductList: React.FC = () => {
               >
                 <Heart className="w-4 h-4" />
               </button>
-              <button
-                onClick={async () => {
-                  try {
-                    await addToCart({
-                      productId: String(product.id),
-                      name: product.name,
-                      price: product.price,
-                      image: product.images?.[0] || '',
-                      quantity: 1
-                    });
-                    console.log(`${product.name} added to cart!`);
-                  } catch (error) {
-                    console.error('Failed to add to cart:', error);
-                  }
+              <AddToCartButton
+                product={product}
+                quantity={1}
+                size="sm"
+                variant="secondary"
+                onCartOpen={() => {
+                  // Optional: Open cart modal after adding
                 }}
-                className="p-2 text-gray-400 hover:text-blue-600 transition-colors"
-              >
-                <ShoppingCart className="w-4 h-4" />
-              </button>
+              />
             </div>
           </div>
         </div>
@@ -270,7 +253,14 @@ const ProductList: React.FC = () => {
   if (state.loading) {
     return (
       <div className="min-h-screen bg-gray-50">
-        <div className="container mx-auto px-4 py-8">
+        <div className="container px-4 max-w-7xl mx-auto py-8">
+          {/* Breadcrumb */}
+          <nav className="flex items-center space-x-2 text-sm text-gray-600 mb-8">
+            <button onClick={() => window.location.href = '/'} className="hover:text-blue-600">Home</button>
+            <span>/</span>
+            <span className="text-gray-900">Products</span>
+          </nav>
+          
           <div className="text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
             <p className="mt-4 text-gray-600">Loading products...</p>
@@ -283,7 +273,14 @@ const ProductList: React.FC = () => {
   if (state.error) {
     return (
       <div className="min-h-screen bg-gray-50">
-        <div className="container mx-auto px-4 py-8">
+        <div className="container px-4 max-w-7xl mx-auto py-8">
+          {/* Breadcrumb */}
+          <nav className="flex items-center space-x-2 text-sm text-gray-600 mb-8">
+            <button onClick={() => window.location.href = '/'} className="hover:text-blue-600">Home</button>
+            <span>/</span>
+            <span className="text-gray-900">Products</span>
+          </nav>
+          
           <div className="text-center bg-white rounded-lg shadow-sm p-8 max-w-md">
             <div className="text-red-500 text-6xl mb-4">⚠️</div>
             <h2 className="text-xl font-bold text-gray-900 mb-2">Error</h2>
@@ -302,17 +299,20 @@ const ProductList: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Page Header */}
-      <div className="bg-white border-b border-gray-200">
-        <div className="container mx-auto px-4 py-8">
-          <div className="max-w-4xl">
-            <h1 className="text-4xl font-bold text-gray-900 mb-2">Products</h1>
-            <p className="text-lg text-gray-600">Browse our collection of high-quality products</p>
-          </div>
-        </div>
-      </div>
+      <div className="container px-4 max-w-7xl mx-auto py-8">
+        {/* Breadcrumb */}
+        <nav className="flex items-center space-x-2 text-sm text-gray-600 mb-8">
+          <button onClick={() => window.location.href = '/'} className="hover:text-blue-600">Home</button>
+          <span>/</span>
+          <span className="text-gray-900">Products</span>
+        </nav>
 
-      <div className="container mx-auto px-4 py-8">
+        {/* Page Header */}
+        <div className="mb-8">
+          <h1 className="text-4xl font-bold text-gray-900 mb-2">Products</h1>
+          <p className="text-lg text-gray-600">Browse our collection of high-quality products</p>
+        </div>
+
         <div className="flex flex-col lg:flex-row gap-8">
           {/* Sidebar Filters */}
           <div className="lg:w-64 flex-shrink-0">

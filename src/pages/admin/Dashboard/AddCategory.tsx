@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, X, Image as ImageIcon } from 'lucide-react';
 import { categoryService } from '../../../services/categoryService';
+import ConfirmModal from '../../../components/admin/ConfirmModal';
+import { createNotification } from '../../../services/notificationService';
 
 interface CategoryFormData {
   name: string;
@@ -15,7 +17,15 @@ const AddCategory: React.FC = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
+  const [successModal, setSuccessModal] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+  }>({
+    isOpen: false,
+    title: '',
+    message: ''
+  });
   const [categories, setCategories] = useState<any[]>([]);
   const [formData, setFormData] = useState<CategoryFormData>({
     name: '',
@@ -65,11 +75,15 @@ const AddCategory: React.FC = () => {
     }
   };
 
+  const handleSuccessClose = () => {
+    setSuccessModal({ isOpen: false, title: '', message: '' });
+    navigate('/admin/categories');
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
-    setSuccess(null);
 
     try {
       // Validate required fields
@@ -92,12 +106,16 @@ const AddCategory: React.FC = () => {
       // Check if category was actually created (has valid ID)
       if (result && result.id) {
         console.log('Category created successfully with ID:', result.id);
-        setSuccess('Category created successfully!');
         
-        // Redirect after a short delay
-        setTimeout(() => {
-          navigate('/admin/categories');
-        }, 1500);
+        // Create notification
+        await createNotification.category.created(formData.name, result.id);
+        
+        // Show success modal
+        setSuccessModal({
+          isOpen: true,
+          title: 'Category Created',
+          message: `Category "${formData.name}" has been successfully created.`
+        });
       } else {
         throw new Error('Category creation failed - no valid ID returned');
       }
@@ -137,15 +155,10 @@ const AddCategory: React.FC = () => {
         {/* Form */}
         <div className="bg-white shadow-sm rounded-lg">
           <form onSubmit={handleSubmit} className="p-6 space-y-6">
-            {/* Error/Success Messages */}
+            {/* Error Messages */}
             {error && (
               <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
                 {error}
-              </div>
-            )}
-            {success && (
-              <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded">
-                {success}
               </div>
             )}
 
@@ -282,6 +295,17 @@ const AddCategory: React.FC = () => {
           </form>
         </div>
       </div>
+
+      {/* Success Modal */}
+      <ConfirmModal
+        isOpen={successModal.isOpen}
+        onClose={handleSuccessClose}
+        onConfirm={handleSuccessClose}
+        title={successModal.title}
+        message={successModal.message}
+        type="success"
+        confirmText="OK"
+      />
     </div>
   );
 };

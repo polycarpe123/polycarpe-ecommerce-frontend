@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, X } from 'lucide-react';
 import { productService } from '../../../services/productService';
 import { categoryService } from '../../../services/categoryService';
+import ConfirmModal from '../../../components/admin/ConfirmModal';
+import { createNotification } from '../../../services/notificationService';
 
 interface ProductFormData {
   name: string;
@@ -22,6 +24,15 @@ const AddProduct: React.FC = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [successModal, setSuccessModal] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+  }>({
+    isOpen: false,
+    title: '',
+    message: ''
+  });
   const [categories, setCategories] = useState<any[]>([
     { id: '507f1f77bcf86cd799439011', name: 'Electronics' }, // Mock MongoDB ObjectId
     { id: '507f1f77bcf86cd799439012', name: 'Clothing' },
@@ -125,6 +136,11 @@ const AddProduct: React.FC = () => {
     setFormData(prev => ({ ...prev, tags }));
   };
 
+  const handleSuccessClose = () => {
+    setSuccessModal({ isOpen: false, title: '', message: '' });
+    navigate('/admin/products');
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -199,8 +215,16 @@ const AddProduct: React.FC = () => {
       // Check if product was actually created (has valid ID)
       if (result && (result.id || result._id)) {
         console.log('Product created successfully with ID:', result.id || result._id);
-        alert('Product created successfully!');
-        navigate('/admin/products');
+        
+        // Create notification
+        await createNotification.product.created(formData.name, result.id || result._id || 'unknown');
+        
+        // Show success modal
+        setSuccessModal({
+          isOpen: true,
+          title: 'Product Created',
+          message: `Product "${formData.name}" has been successfully created and added to the catalog.`
+        });
       } else {
         throw new Error('Product creation failed - no valid ID returned');
       }
@@ -460,6 +484,17 @@ const AddProduct: React.FC = () => {
           </form>
         </div>
       </div>
+
+      {/* Success Modal */}
+      <ConfirmModal
+        isOpen={successModal.isOpen}
+        onClose={handleSuccessClose}
+        onConfirm={handleSuccessClose}
+        title={successModal.title}
+        message={successModal.message}
+        type="success"
+        confirmText="OK"
+      />
     </div>
   );
 };

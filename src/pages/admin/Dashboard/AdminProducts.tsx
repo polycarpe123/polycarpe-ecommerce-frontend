@@ -8,6 +8,8 @@ import {
   Plus
 } from 'lucide-react';
 import { useApp } from '../../../contexts/AppContext';
+import ConfirmModal from '../../../components/admin/ConfirmModal';
+import { createNotification } from '../../../services/notificationService';
 
 interface Product {
   id: number;
@@ -24,6 +26,24 @@ const AdminProducts: React.FC = () => {
   const [products, setProducts] = useState<Product[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
+  const [deleteModal, setDeleteModal] = useState<{
+    isOpen: boolean;
+    product: Product | null;
+    loading: boolean;
+  }>({
+    isOpen: false,
+    product: null,
+    loading: false
+  });
+  const [successModal, setSuccessModal] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+  }>({
+    isOpen: false,
+    title: '',
+    message: ''
+  });
 
   // Mock products data
   useEffect(() => {
@@ -72,6 +92,50 @@ const AdminProducts: React.FC = () => {
     const matchesCategory = selectedCategory === 'all' || product.category === selectedCategory;
     return matchesSearch && matchesCategory;
   });
+
+  const handleDeleteClick = (product: Product) => {
+    setDeleteModal({
+      isOpen: true,
+      product,
+      loading: false
+    });
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!deleteModal.product) return;
+
+    setDeleteModal(prev => ({ ...prev, loading: true }));
+
+    try {
+      // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
+      // Create notification
+      await createNotification.product.deleted(deleteModal.product.name, deleteModal.product.id);
+
+      // Remove product from list
+      setProducts(prev => prev.filter(p => p.id !== deleteModal.product!.id));
+
+      // Close delete modal and show success modal
+      setDeleteModal({ isOpen: false, product: null, loading: false });
+      setSuccessModal({
+        isOpen: true,
+        title: 'Product Deleted',
+        message: `Product "${deleteModal.product.name}" has been successfully deleted.`
+      });
+    } catch (error) {
+      console.error('Error deleting product:', error);
+      setDeleteModal(prev => ({ ...prev, loading: false }));
+    }
+  };
+
+  const handleDeleteCancel = () => {
+    setDeleteModal({ isOpen: false, product: null, loading: false });
+  };
+
+  const handleSuccessClose = () => {
+    setSuccessModal({ isOpen: false, title: '', message: '' });
+  };
 
   if (!isAuthenticated || user?.role !== 'admin') {
     return <div>Loading...</div>;
@@ -183,7 +247,10 @@ const AdminProducts: React.FC = () => {
                       <button className="text-green-600 hover:text-green-900">
                         <Edit className="w-4 h-4" />
                       </button>
-                      <button className="text-red-600 hover:text-red-900">
+                      <button 
+                        onClick={() => handleDeleteClick(product)}
+                        className="text-red-600 hover:text-red-900"
+                      >
                         <Trash2 className="w-4 h-4" />
                       </button>
                     </div>
@@ -194,6 +261,29 @@ const AdminProducts: React.FC = () => {
           </table>
         </div>
       </div>
+
+      {/* Delete Confirmation Modal */}
+      <ConfirmModal
+        isOpen={deleteModal.isOpen}
+        onClose={handleDeleteCancel}
+        onConfirm={handleDeleteConfirm}
+        title="Delete Product"
+        message={`Are you sure you want to delete "${deleteModal.product?.name}"? This action cannot be undone.`}
+        type="delete"
+        confirmText="Delete"
+        loading={deleteModal.loading}
+      />
+
+      {/* Success Modal */}
+      <ConfirmModal
+        isOpen={successModal.isOpen}
+        onClose={handleSuccessClose}
+        onConfirm={handleSuccessClose}
+        title={successModal.title}
+        message={successModal.message}
+        type="success"
+        confirmText="OK"
+      />
     </div>
   );
 };

@@ -241,9 +241,12 @@ const ProductDetail: React.FC = () => {
           <div className="space-y-4">
             <div className="aspect-square bg-white rounded-lg overflow-hidden relative">
               <img
-                src={product.images[selectedImage]}
+                src={product.images && product.images.length > 0 ? product.images[selectedImage] : 'https://picsum.photos/600/600?random=1'}
                 alt={product.name}
                 className="w-full h-full object-cover"
+                onError={(e) => {
+                  e.currentTarget.src = 'https://picsum.photos/600/600?random=1';
+                }}
               />
               <button
                 onClick={handleWishlist}
@@ -254,23 +257,29 @@ const ProductDetail: React.FC = () => {
                 />
               </button>
             </div>
-            <div className="grid grid-cols-4 gap-2">
-              {product.images.map((image, index) => (
-                <button
-                  key={index}
-                  onClick={() => setSelectedImage(index)}
-                  className={`aspect-square bg-white rounded-lg overflow-hidden border-2 transition-all ${
-                    selectedImage === index ? 'border-blue-600' : 'border-gray-200 hover:border-gray-300'
-                  }`}
-                >
-                  <img
-                    src={image}
-                    alt={`${product.name} ${index + 1}`}
-                    className="w-full h-full object-cover"
-                  />
-                </button>
-              ))}
-            </div>
+            {/* Thumbnail Images */}
+            {product.images && product.images.length > 1 && (
+              <div className="grid grid-cols-4 gap-2">
+                {product.images.map((image, index) => (
+                  <button
+                    key={index}
+                    onClick={() => setSelectedImage(index)}
+                    className={`aspect-square bg-white rounded-lg overflow-hidden border-2 transition-all ${
+                      selectedImage === index ? 'border-blue-600' : 'border-gray-200 hover:border-gray-300'
+                    }`}
+                  >
+                    <img
+                      src={image}
+                      alt={`${product.name} ${index + 1}`}
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        e.currentTarget.src = 'https://picsum.photos/150/150?random=' + (index + 1);
+                      }}
+                    />
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Product Information */}
