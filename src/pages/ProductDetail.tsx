@@ -4,22 +4,100 @@ import { Heart, Star, Share2, Truck, RefreshCw, Shield } from 'lucide-react';
 import { productService, type Product } from '../services/productService';
 import { useCart } from '../contexts/CartContext';
 import AddToCartButton from '../components/AddToCartButton';
+import ReviewModal from '../components/ReviewModal';
+import reviewService from '../services/reviewService';
+import { useApp } from '../contexts/AppContext';
 
 const ProductDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { addToCart } = useCart();
+  const { user, isAuthenticated } = useApp();
   
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedImage, setSelectedImage] = useState(0);
-  const [selectedColor, setSelectedColor] = useState<string>('');
-  const [selectedSize, setSelectedSize] = useState<string>('');
+  const [selectedColor, setSelectedColor] = useState('');
+  const [selectedSize, setSelectedSize] = useState('');
   const [quantity, setQuantity] = useState(1);
+  const [activeTab, setActiveTab] = useState('description');
+  const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
+  const [reviews, setReviews] = useState<any[]>([]);
+  const [reviewStats, setReviewStats] = useState<any>(null);
   const [relatedProducts, setRelatedProducts] = useState<Product[]>([]);
-  const [activeTab, setActiveTab] = useState<'description' | 'reviews' | 'specifications'>('description');
   const [isWishlisted, setIsWishlisted] = useState(false);
+
+  // Load reviews when product is loaded
+  useEffect(() => {
+    if (product) {
+      loadReviews();
+    }
+  }, [product]);
+
+  const loadReviews = async () => {
+    if (!product) return;
+    
+    try {
+      const reviewsData = await reviewService.getProductReviews(product.id);
+      setReviews(reviewsData);
+      
+      // Calculate stats from reviews
+      if (reviewsData.length > 0) {
+        const totalReviews = reviewsData.length;
+        const averageRating = reviewsData.reduce((sum, review) => sum + review.rating, 0) / totalReviews;
+        
+        const ratingDistribution = { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 };
+        reviewsData.forEach(review => {
+          ratingDistribution[review.rating as keyof typeof ratingDistribution]++;
+        });
+        
+        setReviewStats({
+          averageRating,
+          totalReviews,
+          ratingDistribution
+        });
+      } else {
+        setReviewStats({
+          averageRating: 0,
+          totalReviews: 0,
+          ratingDistribution: { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 }
+        });
+      }
+    } catch (error) {
+      console.error('Error loading reviews:', error);
+    }
+  };
+
+  const handleReviewSubmit = async (reviewData: {
+    rating: number;
+    title: string;
+    comment: string;
+  }) => {
+    if (!product) return;
+    
+    try {
+      await reviewService.submitReview({
+        productId: product.id,
+        ...reviewData
+      });
+      
+      // Reload reviews to show the new one
+      await loadReviews();
+    } catch (error) {
+      console.error('Error submitting review:', error);
+      throw error;
+    }
+  };
+
+  const handleWriteReview = () => {
+    if (!isAuthenticated) {
+      // Redirect to login or show auth modal
+      alert('Please login to write a review');
+      return;
+    }
+    setIsReviewModalOpen(true);
+  };
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -219,13 +297,15 @@ const ProductDetail: React.FC = () => {
                 {[...Array(5)].map((_, i) => (
                   <Star
                     key={i}
-                    className={`w-5 h-5 ${i < Math.floor(product.rating || 0) ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300'}`}
+                    className={`w-5 h-5 ${i < Math.floor(reviewStats?.averageRating || product.rating || 0) ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300'}`}
                   />
                 ))}
               </div>
-              <span className="text-gray-600">({product.reviews || 0} reviews)</span>
+              <span className="text-gray-600">
+                ({reviewStats?.totalReviews || product.reviews || 0} reviews)
+              </span>
               <button
-                onClick={() => setActiveTab('reviews')}
+                onClick={handleWriteReview}
                 className="text-blue-600 hover:text-blue-700 text-sm"
               >
                 Write a review
@@ -428,13 +508,101 @@ const ProductDetail: React.FC = () => {
             )}
 
             {activeTab === 'reviews' && (
-              <div className="space-y-4">
-                <div className="text-center py-8 text-gray-500">
-                  <p>No reviews yet. Be the first to review this product!</p>
-                  <button className="mt-4 bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+              <div className="space-y-6">
+                {/* Review Summary */}
+                {reviewStats && (
+                  <div className="bg-gray-50 rounded-lg p-6">
+                    <div className="flex items-center gap-8">
+                      <div className="text-center">
+                        <div className="text-3xl font-bold text-gray-900">
+                          {reviewStats.averageRating.toFixed(1)}
+                        </div>
+                        <div className="flex gap-1 justify-center my-2">
+                          {[1, 2, 3, 4, 5].map((star) => (
+                            <Star
+                              key={star}
+                              size={16}
+                              className={`${
+                                star <= Math.round(reviewStats.averageRating)
+                                  ? 'fill-yellow-400 text-yellow-400'
+                                  : 'text-gray-300'
+                              }`}
+                            />
+                          ))}
+                        </div>
+                        <div className="text-sm text-gray-600">
+                          {reviewStats.totalReviews} review{reviewStats.totalReviews !== 1 ? 's' : ''}
+                        </div>
+                      </div>
+                      
+                      <div className="flex-1">
+                        {Object.entries(reviewStats.ratingDistribution).reverse().map(([rating, count]) => (
+                          <div key={rating} className="flex items-center gap-2 mb-1">
+                            <span className="text-sm text-gray-600 w-3">{rating}</span>
+                            <Star size={12} className="fill-yellow-400 text-yellow-400" />
+                            <div className="flex-1 bg-gray-200 rounded-full h-2">
+                              <div
+                                className="bg-yellow-400 h-2 rounded-full"
+                                style={{
+                                  width: `${reviewStats.totalReviews > 0 ? ((count as number) / reviewStats.totalReviews) * 100 : 0}%`
+                                }}
+                              />
+                            </div>
+                            <span className="text-sm text-gray-600 w-8 text-right">{count as number}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Write Review Button */}
+                <div className="text-center">
+                  <button
+                    onClick={handleWriteReview}
+                    className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+                  >
                     Write a Review
                   </button>
                 </div>
+
+                {/* Reviews List */}
+                {reviews.length > 0 ? (
+                  <div className="space-y-4">
+                    {reviews.map((review) => (
+                      <div key={review._id} className="border-b pb-4">
+                        <div className="flex items-center justify-between mb-2">
+                          <div>
+                            <div className="font-medium text-gray-900">
+                              {review.userId?.firstName} {review.userId?.lastName}
+                            </div>
+                            <div className="flex gap-1">
+                              {[1, 2, 3, 4, 5].map((star) => (
+                                <Star
+                                  key={star}
+                                  size={14}
+                                  className={`${
+                                    star <= review.rating
+                                      ? 'fill-yellow-400 text-yellow-400'
+                                      : 'text-gray-300'
+                                  }`}
+                                />
+                              ))}
+                            </div>
+                          </div>
+                          <div className="text-sm text-gray-500">
+                            {new Date(review.createdAt).toLocaleDateString()}
+                          </div>
+                        </div>
+                        <div className="text-gray-700 whitespace-pre-wrap">{review.comment}</div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-8 text-gray-500">
+                    <p>No reviews yet. Be the first to review this product!</p>
+                  </div>
+                )}
               </div>
             )}
 
@@ -509,6 +677,15 @@ const ProductDetail: React.FC = () => {
           </div>
         )}
       </div>
+
+      {/* Review Modal */}
+      <ReviewModal
+        isOpen={isReviewModalOpen}
+        onClose={() => setIsReviewModalOpen(false)}
+        productId={product?.id || ''}
+        productName={product?.name || ''}
+        onSubmitReview={handleReviewSubmit}
+      />
     </div>
   );
 };
